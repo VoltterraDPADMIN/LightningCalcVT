@@ -1,0 +1,62 @@
+{
+  "name": "lightningcalcvt",
+  "version": "1.0.1",
+  "description": "Calculator zonă de protecție paratrăsnet – Normativ I-7/NTE 001/03/00, Anexa 8",
+  "main": "main.js",
+  "author": "Volterra Design Project",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win --x64"
+  },
+  "build": {
+    "appId": "ro.volterra.lightningcalcvt",
+    "productName": "LightningCalcVT",
+    "copyright": "© 2026 Volterra Design Project",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "index.html",
+      "build/**"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "installerHeaderIcon": "build/icon.ico",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "LightningCalcVT",
+      "artifactName": "LightningCalcVT-Setup-${version}.exe",
+      "include": "build/installer.nsh"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "VoltterraDPADMIN",
+      "repo": "LightningCalcVT"
+    }
+  },
+  "devDependencies": {
+    "electron": "^29.4.6",
+    "electron-builder": "^24.13.3"
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.3"
+  }
+}

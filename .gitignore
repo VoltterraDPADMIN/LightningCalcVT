@@ -1,0 +1,4 @@
+node_modules/
+dist/
+VTLC_ICON.png
+*.log

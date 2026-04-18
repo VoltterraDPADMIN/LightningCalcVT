@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<title>Calcul Zonă de Protecție Paratrăsnete Verticale</title>
+<style>
+* { box-sizing: border-box; }
+body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 16px; background: #eef2f7; color: #2c3e50; }
+h1 { color: #111; margin: 0 0 4px; font-size: 21px; }
+h2 { color: #111; font-size: 15px; margin: 14px 0 5px; border-bottom: 2px solid #888; padding-bottom: 4px; }
+h4 { color: #111; margin: 4px 0 6px; font-size: 13px; text-align: center; }
+.note { background: #fff3cd; padding: 9px 14px; border-left: 5px solid #ffc107; margin: 10px 0; border-radius: 4px; font-size: 12px; }
+.top-row { display: grid; grid-template-columns: 300px 1fr; gap: 14px; margin-top: 12px; }
+.panel { background: white; padding: 16px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-top: 12px; }
+label { display: block; margin-top: 9px; font-weight: 600; font-size: 12px; color: #34495e; }
+input, select { width: 100%; padding: 7px 8px; margin-top: 3px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 13px; }
+input:focus, select:focus { outline: none; border-color: #3498db; box-shadow: 0 0 0 2px rgba(52,152,219,0.2); }
+button { background: linear-gradient(135deg, #2980b9, #1a5276); color: white; border: none; padding: 11px; border-radius: 5px; cursor: pointer; margin-top: 10px; width: 100%; font-size: 14px; font-weight: 700; letter-spacing: 0.4px; }
+button:hover { background: linear-gradient(135deg, #3498db, #2471a3); }
+.btn-report { background: linear-gradient(135deg, #27ae60, #1e8449); }
+.btn-report:hover { background: linear-gradient(135deg, #2ecc71, #27ae60); }
+.rrow { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid #f0f0f0; font-size: 12px; }
+.rrow:last-child { border: none; }
+.rval { font-family: 'Consolas', monospace; font-weight: bold; color: #27ae60; }
+.err { color: #c0392b; font-weight: bold; }
+.ok  { color: #27ae60; font-weight: bold; }
+.sec { background: #f0f0f0; padding: 3px 10px; margin: 8px -16px 5px; border-left: 4px solid #555; font-size: 11px; font-weight: 700; color: #111; }
+.small { font-size: 10px; color: #7f8c8d; margin-top: 2px; }
+.graph-row { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; margin-top: 8px; }
+.vis-row   { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; margin-top: 8px; }
+canvas { border: 1px solid #dee2e6; background: white; border-radius: 4px; display: block; }
+/* ===== MODAL ===== */
+#modalOverlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.55); z-index:9999; overflow-y:auto; }
+#modalBox { background:white; margin:30px auto; max-width:860px; padding:0; border-radius:4px; box-shadow:0 8px 40px rgba(0,0,0,0.3); }
+#modalHeader { background:#1a365d; color:white; padding:14px 22px; border-radius:4px 4px 0 0; display:flex; justify-content:space-between; align-items:center; }
+#modalHeader h3 { margin:0; font-size:15px; font-family:Arial,sans-serif; font-weight:600; }
+#modalClose { background:rgba(255,255,255,0.15); border:none; color:white; font-size:18px; cursor:pointer; padding:2px 9px; border-radius:3px; width:auto; margin:0; }
+#modalClose:hover { background:rgba(255,255,255,0.3); }
+#modalContent { padding:28px 32px; font-family:'Times New Roman',Times,serif; font-size:12pt; line-height:1.65; color:#000; }
+.calc-section { margin:16px 0; padding:10px 14px; border:1px solid #bbb; border-radius:2px; }
+.calc-section h4 { margin:0 0 8px; font-family:'Times New Roman',Times,serif; font-size:12pt; font-weight:bold; color:#000; text-align:left; text-transform:uppercase; border-bottom:1px solid #bbb; padding-bottom:4px; }
+.calc-row { margin:5px 0; font-family:'Times New Roman',Times,serif; font-size:12pt; color:#000; }
+.calc-formula { font-family:'Courier New',Courier,monospace; font-size:11.5pt; color:#000; display:inline-block; margin:2px 0; }
+.calc-val { font-weight:bold; color:#000; }
+.calc-bad { font-weight:bold; color:#000; text-decoration:underline; }
+.calc-ok  { font-weight:bold; color:#000; }
+.calc-table { width:100%; border-collapse:collapse; margin-top:8px; font-family:'Times New Roman',Times,serif; font-size:11pt; }
+.calc-table th { background:#000; color:#fff; padding:5px 8px; text-align:center; font-weight:bold; }
+.calc-table td { padding:4px 8px; border:1px solid #888; text-align:center; color:#000; }
+.calc-table tr:nth-child(even) { background:#f5f5f5; }
+.calc-table tr.highlight { background:#e0e0e0 !important; font-weight:bold; }
+
+/* ===== PRINT / PDF ===== */
+@media print {
+  /* Ascunde tot ce nu e raportul */
+  body > *:not(#printArea) { display: none !important; }
+  #printArea {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    box-shadow: none !important;
+  }
+  #modalOverlay {
+    display: block !important;
+    position: static !important;
+    background: none !important;
+    overflow: visible !important;
+    width: 100% !important;
+    height: auto !important;
+  }
+  #modalBox {
+    margin: 0 !important;
+    max-width: 100% !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+  #modalHeader { border-radius: 0 !important; }
+  #modalClose, button { display: none !important; }
+  #modalContent {
+    padding: 16px 24px !important;
+    font-size: 11pt !important;
+  }
+  .calc-section {
+    page-break-inside: avoid;
+    break-inside: avoid;
+    margin: 10px 0 !important;
+  }
+  img {
+    max-width: 100% !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  .calc-formula { font-size: 10.5pt !important; }
+  table { page-break-inside: avoid; break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+
+<h1>Calcul Zonă de Protecție — Paratrăsnete Verticale</h1>
+<p style="color:#444;font-size:12px;margin:0">Conform Normativului NTE 001/03/00 — Cap. 12.2, Anexa 8</p>
+
+<div class="note">
+  <strong>⚠️ Domeniu de valabilitate:</strong> Calcul integral numai pentru <strong>h ≤ 30 m</strong>.
+  &nbsp; a ≤ 7·h<sub>a</sub> (efect mutual 2 tije) &nbsp;|&nbsp; D ≤ 8·h<sub>a</sub> (zonă interioară 3/4 tije)
+</div>
+
+<div class="top-row">
+  <div class="panel" style="margin-top:0">
+    <h2>Date de intrare</h2>
+    <label>Număr de paratrăsnete:</label>
+    <select id="numRods" onchange="updateInputs()">
+      <option value="1">1 paratrăsnet</option>
+      <option value="2" selected>2 paratrăsnete</option>
+      <option value="3">3 paratrăsnete (triunghi echilateral)</option>
+      <option value="4">4 paratrăsnete (pătrat)</option>
+    </select>
+    <label>Înălțime paratrăsnet h [m] (max 30 m):</label>
+    <input type="number" id="h" value="17" step="0.1" min="0.1" max="30">
+    <label>Înălțimea obiectului protejat h<sub>x</sub> [m]:</label>
+    <input type="number" id="hx" value="5" step="0.1" min="0">
+    <div id="aContainer">
+      <label>Distanță dintre paratrăsnete a [m] (latură):</label>
+      <input type="number" id="a" value="34" step="0.1" min="0.1">
+      <div class="small">2 tije: distanța | 3 tije: latura triunghiului | 4 tije: latura pătratului</div>
+    </div>
+    <div id="dContainer" style="display:none">
+      <label>Diametru cerc circumscris / Diagonală D [m]:</label>
+      <input type="number" id="D_in" value="40" step="0.1" min="0.1">
+      <div class="small">3 tije: diam. cerc circumscris | 4 tije: diagonala (a×√2)</div>
+    </div>
+    <button onclick="calculate()">▶ Calculează</button>
+    <button class="btn-report" id="btnReport" onclick="showCalcs()" style="display:none">📋 Calcule complete — raport detaliat</button>
+  </div>
+
+  <div class="panel" id="results" style="margin-top:0">
+    <h2>Rezultate</h2>
+    <p style="color:#aaa;font-size:12px">Apasă „Calculează" pentru rezultate.</p>
+  </div>
+</div>
+
+<!-- GRAPHS -->
+<div class="panel">
+  <h2>Graficul b<sub>x</sub>/h<sub>a</sub> vs a/h<sub>a</sub> — Fig. A.8.6 / A.8.7</h2>
+  <p style="font-size:11px;color:#555;margin:0 0 6px">Date digitizate din normativ — curba roșie = h<sub>x</sub>/h curent — punctul roșu = valoarea b<sub>x</sub>/h<sub>a</sub> calculată</p>
+  <div class="graph-row">
+    <div>
+      <h4>Fig. A.8.6 — domeniu complet a/h<sub>a</sub> = 0 ÷ 7</h4>
+      <canvas id="graphFull" width="560" height="340" style="max-width:100%;"></canvas>
+    </div>
+    <div>
+      <h4>Fig. A.8.7 — detaliu a/h<sub>a</sub> = 5 ÷ 7</h4>
+      <canvas id="graphZoom" width="380" height="340"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- VISUALIZATION -->
+<div class="panel">
+  <h2>Vizualizare zonă de protecție la înălțimea h<sub>x</sub></h2>
+  <div class="vis-row">
+    <div>
+      <h4>Vedere în plan (top-down) la cota h<sub>x</sub></h4>
+      <canvas id="topView" width="540" height="540"></canvas>
+    </div>
+    <div>
+      <h4>Vedere laterală — secțiune prin 2 tije</h4>
+      <canvas id="sideView" width="540" height="540"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div id="printArea">
+<div id="modalOverlay" onclick="closeModal(event)">
+  <div id="modalBox">
+    <div id="modalHeader">
+      <h3>📋 Calcul detaliat — Zonă de protecție paratrăsnete verticale</h3>
+      <button id="modalClose" onclick="document.getElementById('modalOverlay').style.display='none'">✕</button>
+    </div>
+    <div id="modalContent"></div>
+  </div>
+</div>
+</div>
+
+<script>
+// =========================================================
+// FORMULE (Normativ I-7/NTE Anexa 8, h ≤ 30m)
+// =========================================================
+
+// Formula 12.1 — raza de protecție la înălțimea hx
+function computeRx(h, hx) {
+  const ha = h - hx;
+  return ha * 1.6 / (1 + hx / h);
+}
+
+// =========================================================
+// FIG. A.8.6 — Date digitizate din normativ (WebPlotDigitizer)
+// Curbe ordenate de la hx/h=0 (sus) la hx/h=1.0 (jos)
+// NOTĂ: hx=0,6h / 0,7h / 0,8h formează O SINGURĂ curbă în normativ
+// =========================================================
+const FIG_A86_CURVES = [
+  { hxH: 0.0, label: 'hx=0',           pts: [[0.0157,1.6000],[0.5025,1.5538],[0.9842,1.4830],[1.5044,1.3966],[2.0083,1.3215],[2.5187,1.2433],[3.0043,1.1568],[3.4988,1.0798],[4.0193,0.9871],[4.5024,0.8874],[5.0023,0.7676],[5.5091,0.6322],[6.0898,0.4680],[6.5040,0.2971],[6.9835,0.0157]] },
+  { hxH: 0.1, label: '0,1 h',          pts: [[-0.0243,1.4553],[0.5015,1.3815],[1.0043,1.3297],[1.5044,1.2684],[2.0081,1.1977],[2.5083,1.1332],[3.0308,1.0657],[3.5029,0.9962],[4.0012,0.9078],[4.5094,0.8101],[5.0180,0.7036],[5.4924,0.5881],[6.0698,0.4277],[6.4934,0.2574],[6.9838,0.0094]] },
+  { hxH: 0.2, label: '0,2 h',          pts: [[-0.0014,1.3083],[0.4917,1.2614],[1.0075,1.2014],[1.4847,1.1577],[2.0163,1.0952],[2.5070,1.0326],[3.0355,0.9683],[3.5013,0.9019],[4.0182,0.8180],[4.5037,0.7346],[5.0471,0.6244],[5.5046,0.5328],[6.0847,0.3806],[6.5010,0.2310],[6.9838,0.0094]] },
+  { hxH: 0.3, label: '0,3 h',          pts: [[0.0045,1.1889],[0.5036,1.1464],[1.0090,1.1053],[1.5022,1.0571],[2.0148,0.9978],[2.4986,0.9471],[3.0083,0.8821],[3.5022,0.8195],[4.0369,0.7589],[4.5031,0.6831],[5.0682,0.5792],[5.5449,0.4814],[6.0684,0.3906],[6.4229,0.2830],[6.9995,0.0094]] },
+  { hxH: 0.4, label: '0,4 h',          pts: [[0.0557,1.1067],[0.4821,1.0734],[1.0188,1.0342],[1.5086,0.9918],[2.0145,0.9399],[2.5047,0.8880],[3.0423,0.8300],[3.5487,0.7687],[4.0392,0.7105],[4.5148,0.6366],[5.0702,0.5377],[5.4986,0.4636],[6.0546,0.3522],[6.5338,0.2029],[6.9841,0.0031]] },
+  { hxH: 0.5, label: '0,5 h',          pts: [[0.0286,1.0186],[0.4548,0.9885],[1.0228,0.9525],[1.5284,0.9070],[2.0179,0.8708],[2.5081,0.8189],[3.0302,0.7577],[3.5046,0.7057],[4.0274,0.6319],[4.5350,0.5455],[5.0415,0.4811],[5.5175,0.3977],[6.0894,0.2832],[6.5379,0.1211],[7.0000,0.0000]] },
+  { hxH: 0.7, label: '0,9 h',          pts: [[0.0021,1.0027],[0.5029,0.9698],[1.0241,0.9274],[1.5140,0.8818],[2.0353,0.8363],[2.5096,0.7875],[3.0471,0.7326],[3.4901,0.6805],[4.0442,0.6100],[4.5040,0.5360],[5.0588,0.4497],[5.5664,0.3633],[6.0902,0.2675],[6.5527,0.1400],[7.0000,0.0000]], labelOverride: '0,6/0,7/0,8 h' },
+  { hxH: 0.9, label: '0,9 h',          pts: [[0.0146,0.9839],[0.4884,0.9446],[1.0410,0.9023],[1.4993,0.8597],[2.0362,0.8174],[2.5579,0.7656],[3.0325,0.7105],[3.5228,0.6555],[4.0294,0.5911],[4.5049,0.5171],[5.0754,0.4309],[5.5991,0.3382],[6.2507,0.2020],[6.5695,0.1181],[7.0156,0.0032]] },
+  { hxH: 1.0, label: 'hx=1,0 h',       pts: [[0.0330,0.9336],[0.4843,0.9005],[1.5085,0.8000],[2.5040,0.7089],[3.5034,0.6020],[4.4918,0.4649],[5.0141,0.3993],[5.5030,0.3084],[6.0683,0.2014],[6.5042,0.1022],[6.9841,0.0031]] },
+];
+
+// Interpolare liniară bx/ha din datele digitizate ale Fig. A.8.6
+// Returnează { raw, rounded } — raw = valoarea interpolată, rounded = rotunjit la 0,1
+function lookupBxHaGraph(hxH, aHa) {
+  aHa = Math.max(0, Math.min(7, aHa));
+  if (aHa >= 7) return { raw: 0, rounded: 0 };
+
+  // Citire Y pe o curbă la X dat — cel mai apropiat punct digitizat
+  function readCurve(curve, x) {
+    let best = curve.pts[0], bestD = Math.abs(curve.pts[0][0] - x);
+    for (const pt of curve.pts) {
+      const d = Math.abs(pt[0] - x);
+      if (d < bestD) { bestD = d; best = pt; }
+    }
+    return Math.max(0, best[1]);
+  }
+
+  const curves = FIG_A86_CURVES;
+  // Găsim curbele care încadrează hxH
+  let lower = curves[0], upper = curves[curves.length - 1];
+  for (let i = 0; i < curves.length - 1; i++) {
+    if (hxH >= curves[i].hxH && hxH <= curves[i+1].hxH) {
+      lower = curves[i]; upper = curves[i+1]; break;
+    }
+  }
+
+  const yL = readCurve(lower, aHa);
+  const yU = readCurve(upper, aHa);
+  let raw;
+  if (lower.hxH === upper.hxH) {
+    raw = yL;
+  } else {
+    const t = (hxH - lower.hxH) / (upper.hxH - lower.hxH);
+    raw = yL + t * (yU - yL);
+  }
+  raw = Math.max(0, raw);
+  const rounded = Math.round(raw * 10) / 10;
+  return { raw, rounded };
+}
+
+// =========================================================
+// FIG. A.8.7 — Date digitizate din normativ, zona 5–7 (curbe SEPARATE 0.6/0.7/0.8)
+// =========================================================
+const FIG_A87_CURVES = [
+  { hxH: 0.0, label: 'hx=0',   pts: [[5.0078,0.7597],[5.1473,0.7187],[5.2748,0.6759],[5.3984,0.6331],[5.5219,0.5980],[5.6535,0.5551],[5.7690,0.5143],[5.8886,0.4734],[6.0161,0.4287],[6.1357,0.3878],[6.2512,0.3412],[6.3787,0.2907],[6.5102,0.2345],[6.6336,0.1744],[6.7611,0.1163],[6.8765,0.0601],[7.0000,0.0019]] },
+  { hxH: 0.1, label: '0,1 h',  pts: [[5.0114,0.6887],[5.1470,0.6516],[5.2705,0.6126],[5.3981,0.5755],[5.5216,0.5347],[5.6532,0.4957],[5.7648,0.4625],[5.8923,0.4255],[6.0199,0.3846],[6.1355,0.3456],[6.2590,0.3048],[6.3786,0.2639],[6.5061,0.2172],[6.6336,0.1687],[6.7570,0.1105],[6.8765,0.0581],[7.0000,0.0000]] },
+  { hxH: 0.2, label: '0,2 h',  pts: [[5.0151,0.6349],[5.1467,0.6017],[5.2663,0.5704],[5.3979,0.5391],[5.5255,0.5059],[5.6491,0.4727],[5.7687,0.4414],[5.8843,0.4082],[6.0118,0.3692],[6.1314,0.3322],[6.2549,0.2894],[6.3785,0.2485],[6.5060,0.2038],[6.6335,0.1591],[6.7570,0.1048],[6.8925,0.0562],[7.0040,0.0000]] },
+  { hxH: 0.3, label: '0,3 h',  pts: [[5.0149,0.5870],[5.1505,0.5614],[5.2741,0.5359],[5.3977,0.5084],[5.5253,0.4752],[5.6489,0.4439],[5.7685,0.4107],[5.8961,0.3698],[6.0156,0.3347],[6.1312,0.2958],[6.2548,0.2568],[6.3783,0.2159],[6.5059,0.1770],[6.6374,0.1322],[6.7569,0.0894],[6.8805,0.0485],[7.0000,0.0019]] },
+  { hxH: 0.4, label: '0,4 h',  pts: [[5.0147,0.5371],[5.1463,0.5173],[5.2700,0.4994],[5.3936,0.4739],[5.5252,0.4483],[5.6528,0.4189],[5.7644,0.3896],[5.8920,0.3545],[6.0156,0.3174],[6.1391,0.2804],[6.2587,0.2434],[6.3783,0.2063],[6.5098,0.1635],[6.6333,0.1226],[6.7569,0.0798],[6.8765,0.0466],[7.0040,0.0019]] },
+  { hxH: 0.5, label: '0,5 h',  pts: [[5.0105,0.4949],[5.1501,0.4731],[5.2617,0.4534],[5.3974,0.4297],[5.5250,0.4023],[5.6526,0.3748],[5.7682,0.3455],[5.8958,0.3161],[6.0194,0.2848],[6.1390,0.2516],[6.2626,0.2184],[6.3782,0.1852],[6.5057,0.1520],[6.6333,0.1149],[6.7609,0.0779],[6.8804,0.0409],[6.9960,0.0019]] },
+  { hxH: 0.6, label: '0,6 h',  pts: [[5.0063,0.4719],[5.1459,0.4482],[5.2656,0.4265],[5.3932,0.4048],[5.5249,0.3812],[5.6485,0.3556],[5.7681,0.3282],[5.8917,0.2988],[6.0153,0.2714],[6.1389,0.2420],[6.2625,0.2107],[6.3782,0.1814],[6.5097,0.1462],[6.6333,0.1092],[6.7569,0.0741],[6.8765,0.0466],[6.9960,0.0058]] },
+  { hxH: 0.7, label: '0,7 h',  pts: [[5.0062,0.4489],[5.1458,0.4214],[5.2655,0.3997],[5.3971,0.3780],[5.5207,0.3563],[5.6523,0.3307],[5.7640,0.3090],[5.8916,0.2854],[6.0153,0.2599],[6.1389,0.2343],[6.2585,0.2050],[6.3781,0.1756],[6.5057,0.1443],[6.6333,0.1054],[6.7608,0.0664],[7.0000,0.0038]] },
+  { hxH: 0.8, label: '0,8 h',  pts: [[5.0061,0.4240],[5.1457,0.3983],[5.2694,0.3805],[5.3930,0.3588],[5.5246,0.3371],[5.6523,0.3115],[5.7639,0.2937],[5.8955,0.2662],[6.0152,0.2407],[6.1388,0.2171],[6.2624,0.1896],[6.3781,0.1622],[6.5096,0.1309],[6.6332,0.0958],[6.7608,0.0568],[7.0040,0.0019]] },
+  { hxH: 0.9, label: '0,9 h',  pts: [[5.0100,0.3990],[5.1456,0.3772],[5.2653,0.3575],[5.3969,0.3357],[5.5245,0.3159],[5.6482,0.2923],[5.7678,0.2726],[5.8955,0.2489],[6.0191,0.2272],[6.1387,0.2017],[6.2624,0.1762],[6.3780,0.1488],[6.5056,0.1175],[6.6332,0.0843],[6.7567,0.0491],[6.8764,0.0217],[7.0000,0.0019]] },
+];
+
+// h0 — înălțimea minimă a arcului de protecție la mijloc (Normativ: h0 ≈ h − a/7)
+function computeH0(h, a) {
+  return Math.max(0, h - a / 7);
+}
+
+// =========================================================
+// UI
+// =========================================================
+function updateInputs() {
+  const n = +document.getElementById('numRods').value;
+  document.getElementById('aContainer').style.display = n === 1 ? 'none' : 'block';
+  document.getElementById('dContainer').style.display = n >= 3 ? 'block' : 'none';
+}
+
+let LAST_R = null, LAST_TOP_IMG = null, LAST_SIDE_IMG = null, LAST_GRAPH_IMG = null, LAST_GRAPH_ZOOM_IMG = null;
+
+// PNG-uri normativ (base64) — încărcate via preload Electron la pornire
+let NORMA_IMG_A86 = null;
+let NORMA_IMG_A87 = null;
+
+// Încărcare imagini din normativ (disponibil doar în aplicația Electron)
+if (typeof window !== 'undefined' && window.electronAPI) {
+  try {
+    const imgs = window.electronAPI.getNormativImages();
+    NORMA_IMG_A86 = imgs.a86 || null;
+    NORMA_IMG_A87 = imgs.a87 || null;
+  } catch(e) {}
+}
+
+function calculate() {
+  const n    = +document.getElementById('numRods').value;
+  const h    = +document.getElementById('h').value;
+  const hx   = +document.getElementById('hx').value;
+  const a    = n > 1 ? +document.getElementById('a').value : 0;
+  const D_in = n >= 3 ? +document.getElementById('D_in').value : 0;
+
+  if (h > 30)  { alert('Formulele sunt valabile numai pentru h ≤ 30 m!'); return; }
+  if (hx >= h) { alert('hx trebuie să fie mai mic decât h!'); return; }
+  if (hx < 0)  { alert('hx ≥ 0 m!'); return; }
+
+  const ha = h - hx;
+  const rx = computeRx(h, hx);
+  const r  = { n, h, hx, ha, rx, a };
+
+  if (n >= 2) {
+    r.d         = a / 2;
+    r.h0        = computeH0(h, a);
+    const _bx   = lookupBxHaGraph(hx/h, a/ha);
+    r.bxHaRaw   = _bx.raw;      // valoare interpolată din graficul digitizat
+    r.bxHa      = _bx.rounded;  // rotunjire la cel mai apropiat 0,1
+    r.bx        = r.bxHa * ha;
+    r.lambda    = r.d - rx;
+    // c = distanța de la (d, rx) la (0, bx) — latura oblică a patrulaterului
+    r.c         = Math.sqrt(r.d * r.d + (rx - r.bx) * (rx - r.bx));
+    r.aHa       = a / ha;
+    r.hxH       = hx / h;
+    r.aMax      = 7 * ha;
+    r.aOK       = r.aHa <= 7;
+    r.mutOK     = r.h0 > hx && r.aOK;
+  }
+  if (n >= 3) {
+    r.D      = D_in;
+    r.Dmax   = 8 * ha;
+    r.intOK  = D_in > 0 && D_in <= r.Dmax;
+  }
+
+  LAST_R = r;
+  displayResults(r);
+  drawGraph(r, 'graphFull', 0, 7);
+  drawGraph(r, 'graphZoom', 5, 7);
+  drawTopView(r);
+  drawSideView(r);
+  LAST_TOP_IMG   = document.getElementById('topView').toDataURL('image/png');
+  LAST_SIDE_IMG  = document.getElementById('sideView').toDataURL('image/png');
+  LAST_GRAPH_IMG = document.getElementById('graphFull').toDataURL('image/png');
+  document.getElementById('btnReport').style.display = 'block';
+}
+
+// =========================================================
+// AFIȘARE REZULTATE
+// =========================================================
+function row(lbl, val) {
+  return `<div class="rrow"><span>${lbl}</span><span class="rval">${val}</span></div>`;
+}
+function chk(lbl, ok) {
+  return `<div class="rrow"><span>${lbl}</span><span class="${ok?'ok':'err'}">${ok?'✓ OK':'✗ Neîndeplinit'}</span></div>`;
+}
+
+function displayResults(r) {
+  let h = '<h2>Rezultate</h2>';
+  h += '<div class="sec">Mărimi de bază</div>';
+  h += row('h<sub>a</sub> = h − h<sub>x</sub>', `${r.ha.toFixed(3)} m`);
+  h += row('r<sub>x</sub> = h<sub>a</sub>·1,6/(1+h<sub>x</sub>/h)', `${r.rx.toFixed(3)} m`);
+
+  if (r.n >= 2) {
+    h += '<div class="sec">Efect mutual — 2 tije</div>';
+    h += row('a / h<sub>a</sub>', r.aHa.toFixed(3));
+    h += row('h<sub>x</sub> / h', r.hxH.toFixed(4));
+    h += row('h<sub>0</sub> = h − a/7', `${r.h0.toFixed(3)} m`);
+    h += row('b<sub>x</sub>/h<sub>a</sub>  (din Fig. A.8.6)', r.bxHa.toFixed(1));
+    h += row('b<sub>x</sub> = (b<sub>x</sub>/h<sub>a</sub>) × h<sub>a</sub>', `${r.bx.toFixed(3)} m`);
+    h += row('λ = d − r<sub>x</sub>', `${r.lambda.toFixed(3)} m`);
+    h += row('c = √((a/2)²+(r<sub>x</sub>−b<sub>x</sub>)²)', `${r.c.toFixed(3)} m`);
+    h += '<div class="sec">Verificări</div>';
+    h += chk(`a ≤ 7·h<sub>a</sub> = ${r.aMax.toFixed(1)} m`, r.aOK);
+    h += chk(`h<sub>0</sub> (${r.h0.toFixed(2)} m) > h<sub>x</sub> (${r.hx} m)`, r.h0 > r.hx);
+  }
+  if (r.n >= 3) {
+    h += '<div class="sec">Zonă interioară (3/4 tije)</div>';
+    h += row('D introdus', `${r.D.toFixed(2)} m`);
+    h += row('D<sub>max</sub> = 8·h<sub>a</sub>', `${r.Dmax.toFixed(2)} m`);
+    h += chk('D ≤ 8·h<sub>a</sub> → interior protejat', r.intOK);
+  }
+  document.getElementById('results').innerHTML = h;
+}
+
+// =========================================================
+// GRAFICE A.8.6 / A.8.7
+// 10 curbe hx/h: 0.0, 0.1, ..., 0.9
+// 71 puncte: a/ha = 0.0, 0.1, 0.2, ..., 7.0 (pas 0.1)
+// =========================================================
+function drawGraph(r, id, xMin, xMax) {
+  const cv = document.getElementById(id);
+  if (!cv) return;
+  const ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const isZoom = xMin >= 4.5;
+  const ML = 48, MR = isZoom ? 75 : 90, MT = 16, MB = 42;
+  const gW = W - ML - MR, gH = H - MT - MB;
+  const yMin = 0, yMax = isZoom ? 0.8 : 1.6;
+  const yStep = isZoom ? 0.1 : 0.2;
+  const gx = x => ML + (x - xMin) / (xMax - xMin) * gW;
+  const gy = y => MT + (1 - (y - yMin) / (yMax - yMin)) * gH;
+
+  ctx.fillStyle = '#fafbfc';
+  ctx.fillRect(ML, MT, gW, gH);
+
+  const xStep = (xMax - xMin) <= 2.5 ? 0.25 : 1;
+  ctx.strokeStyle = '#ccc'; ctx.lineWidth = 0.5;
+  for (let x = Math.ceil(xMin / xStep) * xStep; x <= xMax + 0.001; x += xStep) {
+    ctx.beginPath(); ctx.moveTo(gx(x), MT); ctx.lineTo(gx(x), MT + gH); ctx.stroke();
+  }
+  for (let y = 0; y <= yMax + 0.001; y += yStep) {
+    ctx.beginPath(); ctx.moveTo(ML, gy(y)); ctx.lineTo(ML + gW, gy(y)); ctx.stroke();
+  }
+
+  ctx.strokeStyle = '#333'; ctx.lineWidth = 1.5;
+  ctx.strokeRect(ML, MT, gW, gH);
+
+  ctx.fillStyle = '#333'; ctx.textAlign = 'center'; ctx.font = '10px Arial';
+  for (let x = Math.ceil(xMin / xStep) * xStep; x <= xMax + 0.001; x += xStep) {
+    ctx.fillText(x.toFixed(xStep < 1 ? 2 : 0), gx(x), MT + gH + 13);
+  }
+  ctx.textAlign = 'right'; ctx.font = '10px Arial';
+  for (let y = 0; y <= yMax + 0.001; y += yStep) {
+    ctx.fillText(y.toFixed(1), ML - 4, gy(y) + 3);
+  }
+
+  ctx.save(); ctx.translate(12, MT + gH / 2); ctx.rotate(-Math.PI / 2);
+  ctx.font = 'bold 11px Arial'; ctx.textAlign = 'center'; ctx.fillStyle = '#333';
+  ctx.fillText('bx / ha', 0, 0); ctx.restore();
+  ctx.font = 'bold 11px Arial'; ctx.textAlign = 'center'; ctx.fillStyle = '#333';
+  ctx.fillText('a / ha', ML + gW / 2, H - 4);
+
+  // Alegem setul de date: A.8.7 (zoom 5-7) sau A.8.6 (complet 0-7)
+  const curves = xMin >= 4.5 ? FIG_A87_CURVES : FIG_A86_CURVES;
+
+  // Determinăm care curbă este evidențiată (roșu) pentru hxH curent
+  function highlightedCurveIdx(hxH) {
+    if (hxH === undefined || hxH === null) return -1;
+    let best = 0, bestD = Math.abs(curves[0].hxH - hxH);
+    for (let i = 1; i < curves.length; i++) {
+      const d = Math.abs(curves[i].hxH - hxH);
+      if (d < bestD) { bestD = d; best = i; }
+    }
+    return best;
+  }
+
+  const hlIdx = (r && r.n >= 2) ? highlightedCurveIdx(r.hxH) : -1;
+
+  // ---- Desenăm curbele (2 treceri: negre, apoi roșie) ----
+  [false, true].forEach(drawHL => {
+    curves.forEach((curve, i) => {
+      const isHL = (i === hlIdx);
+      if (drawHL !== isHL) return;
+      ctx.strokeStyle = isHL ? '#e74c3c' : '#333';
+      ctx.lineWidth   = isHL ? 2.2 : 1.0;
+      ctx.setLineDash([]);
+      ctx.save();
+      ctx.beginPath(); ctx.rect(ML, MT, gW, gH); ctx.clip();
+      ctx.beginPath();
+      let first = true;
+      for (const [px_raw, py_raw] of curve.pts) {
+        if (px_raw < xMin - 0.5 || px_raw > xMax + 0.5) continue;
+        const px = gx(Math.max(xMin, Math.min(xMax, px_raw)));
+        const py = gy(Math.min(py_raw, yMax));
+        if (first) { ctx.moveTo(px, py); first = false; } else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+      ctx.restore();
+    });
+  });
+
+  // ---- Legendă cu linii leader ----
+  // Spațiere uniformă pe verticală pentru toate etichetele
+  const legendFont     = isZoom ? '10px Arial' : '9.5px Arial';
+  const legendFontHL   = isZoom ? 'bold 10px Arial' : 'bold 9.5px Arial';
+  const legendLineH    = isZoom ? 14 : 13;  // spațiu între etichete
+  const legendStartY   = MT + 6;
+  const legendX        = ML + gW + 8;       // x stânga a textului
+  const leaderEndX     = ML + gW;           // dreapta graficului
+  // X de referință pentru punctul de pe curbă (unde linia leader se termină)
+  const leaderRefX     = isZoom ? 5.25 : 2.0;
+
+  // Interpolare liniară pe curbă la x exact (nu snap la cel mai apropiat punct)
+  function interpAtX(pts, xRef) {
+    // Caută segmentul care încadrează xRef
+    for (let i = 0; i < pts.length - 1; i++) {
+      const [x0, y0] = pts[i];
+      const [x1, y1] = pts[i + 1];
+      if (xRef >= x0 - 1e-9 && xRef <= x1 + 1e-9) {
+        if (Math.abs(x1 - x0) < 1e-9) return y0;
+        const t = (xRef - x0) / (x1 - x0);
+        return y0 + t * (y1 - y0);
+      }
+    }
+    // Fallback: capătul cel mai apropiat
+    if (xRef <= pts[0][0]) return pts[0][1];
+    return pts[pts.length - 1][1];
+  }
+
+  curves.forEach((curve, i) => {
+    const isHL  = (i === hlIdx);
+    const color = isHL ? '#e74c3c' : '#333';
+    const lbl   = curve.labelOverride || curve.label;
+
+    // Poziția Y a etichetei (uniformă, de sus în jos în ordinea curbelor)
+    const lblY = legendStartY + i * legendLineH + legendLineH / 2;
+
+    // Verifică că leaderRefX e în domeniul curbei
+    const xFirst = curve.pts[0][0], xLast = curve.pts[curve.pts.length - 1][0];
+    if (leaderRefX < xFirst - 0.5 || leaderRefX > xLast + 0.5) return;
+
+    // Y interpolat exact la leaderRefX
+    const interpY = interpAtX(curve.pts, leaderRefX);
+    const curveY  = gy(Math.min(interpY, yMax));
+    const dotX    = gx(leaderRefX);
+
+    // Linia leader: de la eticheta (legendX-4, lblY) la marginea dreaptă,
+    // apoi diagonală până la punctul de pe curbă (x fix = leaderRefX)
+    ctx.strokeStyle = color;
+    ctx.lineWidth   = isHL ? 1.4 : 0.9;
+    ctx.setLineDash([3, 2]);
+    ctx.beginPath();
+    ctx.moveTo(legendX - 4, lblY);
+    ctx.lineTo(leaderEndX, lblY);
+    ctx.lineTo(dotX, curveY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Mic cerc pe curbă (toți la același x pe ecran)
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(dotX, curveY, isHL ? 3 : 2, 0, 2 * Math.PI);
+    ctx.fill();
+
+    // Text etichetă
+    ctx.font      = isHL ? legendFontHL : legendFont;
+    ctx.fillStyle = color;
+    ctx.textAlign = 'left';
+    ctx.fillText(lbl, legendX, lblY + 3);
+  });
+
+  // Punct curent (roșu) cu crosshair
+  if (r && r.n >= 2) {
+    const xi = r.aHa, yi = r.bxHa;
+    if (xi >= xMin && xi <= xMax && yi >= 0) {
+      const px = gx(xi), py = gy(Math.max(0, Math.min(yMax, yi)));
+      ctx.strokeStyle = 'rgba(220,50,50,0.7)'; ctx.lineWidth = 1.2; ctx.setLineDash([4, 3]);
+      ctx.beginPath(); ctx.moveTo(ML, py); ctx.lineTo(px, py); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(px, MT + gH); ctx.lineTo(px, py); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#e74c3c';
+      ctx.beginPath(); ctx.arc(px, py, 5.5, 0, 2 * Math.PI); ctx.fill();
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(px, py, 5.5, 0, 2 * Math.PI); ctx.stroke();
+      ctx.fillStyle = '#c0392b'; ctx.font = 'bold 9px Arial'; ctx.textAlign = 'left';
+      const lxLabel = px + 7 < ML + gW - 70 ? px + 7 : px - 80;
+      ctx.fillText(`(${xi.toFixed(2)}, ${yi.toFixed(2)})`, lxLabel, py - 5);
+    }
+  }
+}
+
+// =========================================================
+// POZIȚIILE TIJELOR
+// =========================================================
+function getRodPositions(r) {
+  const a = r.a;
+  if (r.n === 1) return [{ x: 0, y: 0 }];
+  if (r.n === 2) return [{ x: -a/2, y: 0 }, { x: a/2, y: 0 }];
+  if (r.n === 3) {
+    const Rc = a / Math.sqrt(3);
+    return [{ x: 0, y: Rc }, { x: -a/2, y: -Rc/2 }, { x: a/2, y: -Rc/2 }];
+  }
+  return [{ x:-a/2,y:a/2 },{ x:a/2,y:a/2 },{ x:a/2,y:-a/2 },{ x:-a/2,y:-a/2 }];
+}
+
+// =========================================================
+// TOP-DOWN VIEW
+// =========================================================
+function drawTopView(r) {
+  const cv = document.getElementById('topView');
+  const ctx = cv.getContext('2d');
+  ctx.clearRect(0, 0, cv.width, cv.height);
+
+  const rods = getRodPositions(r);
+  let maxE = r.rx;
+  rods.forEach(p => { const e = Math.hypot(p.x, p.y) + r.rx * 1.15; if (e > maxE) maxE = e; });
+  maxE *= 1.15;
+  const SC = (cv.width - 80) / (2 * maxE);
+  const CX = cv.width / 2, CY = cv.height / 2;
+  const ts = p => ({ x: CX + p.x * SC, y: CY - p.y * SC });
+
+  // Grid
+  ctx.strokeStyle = '#edf2f7'; ctx.lineWidth = 0.5;
+  for (let v = -Math.ceil(maxE/5)*5; v <= maxE; v += 5) {
+    const px = ts({x:v,y:0}).x, py = ts({x:0,y:v}).y;
+    ctx.beginPath(); ctx.moveTo(px, 0); ctx.lineTo(px, cv.height); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, py); ctx.lineTo(cv.width, py); ctx.stroke();
+  }
+  ctx.strokeStyle = '#ccc'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0, CY); ctx.lineTo(cv.width, CY); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(CX, 0); ctx.lineTo(CX, cv.height); ctx.stroke();
+
+  const FILL   = 'rgba(52,152,219,0.38)';
+  const STROKE = '#1a5276';
+
+  // ---- Helper: octogon de legătură pentru perechea (ri, rj) ----
+  function connectionPoly(ri, rj, rxv, bxv) {
+    const dist = Math.hypot(ri.x-rj.x, ri.y-rj.y);
+    const dx = (rj.x-ri.x)/dist, dy = (rj.y-ri.y)/dist; // direcție
+    const nx = -dy, ny =  dx;                              // normală
+    const mx = (ri.x+rj.x)/2, my = (ri.y+rj.y)/2;        // mijloc
+    return [
+      {x: ri.x,           y: ri.y          },
+      {x: ri.x+nx*rxv,    y: ri.y+ny*rxv   },
+      {x: mx+nx*bxv,      y: my+ny*bxv     },
+      {x: rj.x+nx*rxv,    y: rj.y+ny*rxv   },
+      {x: rj.x,           y: rj.y          },
+      {x: rj.x-nx*rxv,    y: rj.y-ny*rxv   },
+      {x: mx-nx*bxv,      y: my-ny*bxv     },
+      {x: ri.x-nx*rxv,    y: ri.y-ny*rxv   }
+    ];
+  }
+
+  // ---- Helper: perechi adiacente ----
+  function adjPairs(n) {
+    if (n === 2) return [[0,1]];
+    if (n === 3) return [[0,1],[1,2],[2,0]];
+    return [[0,1],[1,2],[2,3],[3,0]];
+  }
+
+  // ============================================================
+  // PASUL 1 — umplere unică (evită suprapunerea culorilor)
+  // ============================================================
+  ctx.fillStyle = FILL;
+  ctx.beginPath();
+
+  // Cercurile individuale
+  rods.forEach(p => {
+    const s = ts(p);
+    ctx.moveTo(s.x + r.rx*SC, s.y);
+    ctx.arc(s.x, s.y, r.rx*SC, 0, 2*Math.PI);
+  });
+
+  // Zonele de legătură (octogoane) pentru fiecare pereche adiacentă
+  if (r.n >= 2 && r.mutOK && r.bx > 0) {
+    adjPairs(r.n).forEach(([i,j]) => {
+      const poly = connectionPoly(rods[i], rods[j], r.rx, r.bx);
+      poly.forEach((pt, k) => {
+        const s = ts(pt);
+        if (k === 0) ctx.moveTo(s.x, s.y); else ctx.lineTo(s.x, s.y);
+      });
+      ctx.closePath();
+    });
+  }
+
+  // Zona interioară (dacă D ≤ 8·ha)
+  // Trebuie să aibă aceeași direcție de rotație (CW în screen = winding +1) ca restul subpath-urilor,
+  // altfel zonele de suprapunere devin 0 și apar goluri albe.
+  if (r.n >= 3 && r.intOK) {
+    const sPts = rods.map(p => ts(p));
+    let sArea = 0;
+    for (let k = 0; k < sPts.length; k++) {
+      const a2 = sPts[k], b2 = sPts[(k+1) % sPts.length];
+      sArea += a2.x * b2.y - b2.x * a2.y;
+    }
+    // sArea > 0 = CW în screen (winding +1); sArea < 0 = CCW (winding -1) → reversăm
+    const orderedRods = sArea < 0 ? [...rods].reverse() : rods;
+    orderedRods.forEach((p, i) => {
+      const s = ts(p);
+      if (i === 0) ctx.moveTo(s.x, s.y); else ctx.lineTo(s.x, s.y);
+    });
+    ctx.closePath();
+  }
+
+  ctx.fill(); // o singură umplere — culoare uniformă peste tot
+
+  // ============================================================
+  // PASUL 2 — contururi patrulaterale (pentru fiecare pereche)
+  // ============================================================
+  if (r.n >= 2 && r.mutOK && r.bx > 0) {
+    ctx.strokeStyle = 'rgba(26,82,118,0.65)';
+    ctx.lineWidth = 1.2;
+    ctx.setLineDash([]);
+
+    adjPairs(r.n).forEach(([i,j]) => {
+      const ri = rods[i], rj = rods[j];
+      const dist = Math.hypot(ri.x-rj.x, ri.y-rj.y);
+      const dx = (rj.x-ri.x)/dist, dy = (rj.y-ri.y)/dist;
+      const nx = -dy, ny = dx;
+      const mx = (ri.x+rj.x)/2, my = (ri.y+rj.y)/2;
+      // Mijlocul edge-ului
+      const O  = {x:mx,        y:my       };
+      const Pi = {x:ri.x,      y:ri.y     };
+      const Bi = {x:ri.x+nx*r.rx, y:ri.y+ny*r.rx};
+      const C  = {x:mx+nx*r.bx,   y:my+ny*r.bx  };
+      const Pj = {x:rj.x,      y:rj.y     };
+      const Bj = {x:rj.x+nx*r.rx, y:rj.y+ny*r.rx};
+      // 2 patrulaterale simetrice per pereche (sus + jos față de normală)
+      [[O,Pi,Bi,C],[O,Pj,Bj,C]].forEach(quad => {
+        ctx.beginPath();
+        quad.forEach((p,k) => { const s=ts(p); if(k===0) ctx.moveTo(s.x,s.y); else ctx.lineTo(s.x,s.y); });
+        ctx.closePath(); ctx.stroke();
+      });
+      // Simetric pe cealaltă parte a normalei
+      const Cm = {x:mx-nx*r.bx,   y:my-ny*r.bx  };
+      const Bim= {x:ri.x-nx*r.rx, y:ri.y-ny*r.rx};
+      const Bjm= {x:rj.x-nx*r.rx, y:rj.y-ny*r.rx};
+      [[O,Pi,Bim,Cm],[O,Pj,Bjm,Cm]].forEach(quad => {
+        ctx.beginPath();
+        quad.forEach((p,k) => { const s=ts(p); if(k===0) ctx.moveTo(s.x,s.y); else ctx.lineTo(s.x,s.y); });
+        ctx.closePath(); ctx.stroke();
+      });
+    });
+  }
+
+  // ============================================================
+  // PASUL 3 — cercuri punctate
+  // ============================================================
+  ctx.strokeStyle = STROKE; ctx.lineWidth = 2; ctx.setLineDash([6,4]);
+  rods.forEach(p => {
+    const s = ts(p);
+    ctx.beginPath(); ctx.arc(s.x, s.y, r.rx*SC, 0, 2*Math.PI); ctx.stroke();
+  });
+  ctx.setLineDash([]);
+
+  // ============================================================
+  // PASUL 4 — etichete de stare (interior)
+  // ============================================================
+  if (r.n >= 3) {
+    ctx.textAlign = 'center';
+    if (r.intOK) {
+      ctx.fillStyle = '#1a5276'; ctx.font = 'bold 11px Arial';
+      ctx.fillText('INTERIOR', CX, CY+5);
+      ctx.font = '10px Arial';
+      ctx.fillText('D ≤ 8·ha ✓', CX, CY+18);
+    } else if (r.D && !r.intOK) {
+      ctx.fillStyle = '#c0392b'; ctx.font = 'bold 10px Arial';
+      ctx.fillText('D > 8·ha  ✗', CX, CY+5);
+    }
+  }
+
+  // ============================================================
+  // PASUL 5 — marcatori tije + centru O
+  // ============================================================
+  rods.forEach((p,i) => {
+    const s = ts(p);
+    ctx.fillStyle = '#e74c3c';
+    ctx.beginPath(); ctx.arc(s.x, s.y, 5, 0, 2*Math.PI); ctx.fill();
+    ctx.strokeStyle = '#922b21'; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.fillStyle = '#1a252f'; ctx.font = 'bold 12px Arial'; ctx.textAlign = 'left';
+    ctx.fillText(`P${i+1}`, s.x+7, s.y-6);
+  });
+  if (r.n >= 2) {
+    const o = ts({x:0,y:0});
+    ctx.fillStyle = '#555';
+    ctx.beginPath(); ctx.arc(o.x, o.y, 3, 0, 2*Math.PI); ctx.fill();
+    ctx.fillStyle = '#555'; ctx.font = 'bold 12px Arial'; ctx.textAlign = 'left';
+    ctx.fillText('O', o.x+5, o.y+14);
+  }
+
+  // ============================================================
+  // PASUL 6 — legendă numerică (colț stânga-sus)
+  // ============================================================
+  ctx.fillStyle = '#2c3e50'; ctx.font = '10.5px Consolas'; ctx.textAlign = 'left';
+  [
+    `rx = ${r.rx.toFixed(2)} m`,
+    r.n>=2 ? `bx = ${r.bx.toFixed(2)} m`  : '',
+    r.n>=2 ? `λ  = ${r.lambda.toFixed(2)} m` : '',
+    r.n>=2 ? `c  = ${r.c.toFixed(2)} m`   : '',
+    r.n>=3 ? `D  = ${r.D ? r.D.toFixed(2) : '—'} m` : ''
+  ].filter(Boolean).forEach((l,i) => ctx.fillText(l, 8, 15+i*14));
+}
+
+// =========================================================
+// SIDE VIEW
+// =========================================================
+function drawSideView(r) {
+  const cv = document.getElementById('sideView');
+  const ctx = cv.getContext('2d');
+  ctx.clearRect(0, 0, cv.width, cv.height);
+
+  const d = r.n > 1 ? r.a/2 : 0;
+  const rodXs = r.n === 1 ? [0] : [-d, d];
+  const xMin = r.n === 1 ? -r.rx*1.3 : -(d+r.rx)*1.15;
+  const xMax = -xMin;
+  const yMax = r.h * 1.28;
+
+  const ML=46,MR=14,MT=14,MB=50;
+  const SX=(cv.width-ML-MR)/(xMax-xMin), SY=(cv.height-MT-MB)/yMax;
+  const SC=Math.min(SX,SY);
+  const OX=ML-xMin*SC, OY=cv.height-MB;
+  const ts=(x,y)=>({x:OX+x*SC,y:OY-y*SC});
+
+  ctx.strokeStyle='#edf2f7'; ctx.lineWidth=0.5;
+  for (let y=0; y<=yMax; y+=2) {
+    const p=ts(xMin,y),q=ts(xMax,y);
+    ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y); ctx.stroke();
+  }
+
+  const FILL='rgba(52,152,219,0.38)';
+
+  if (r.n === 1) {
+    ctx.fillStyle=FILL; ctx.beginPath();
+    ctx.moveTo(ts(0,r.h).x,ts(0,r.h).y);
+    for (let z=r.h; z>=0; z-=0.12) { const rz=(r.h-z)*1.6/(1+z/r.h); ctx.lineTo(ts(rz,z).x,ts(rz,z).y); }
+    for (let z=0; z<=r.h; z+=0.12) { const rz=(r.h-z)*1.6/(1+z/r.h); ctx.lineTo(ts(-rz,z).x,ts(-rz,z).y); }
+    ctx.closePath(); ctx.fill(); ctx.strokeStyle='#2471a3'; ctx.lineWidth=2; ctx.stroke();
+  } else {
+    for (const dx of [-d,d]) {
+      const sign=dx<0?-1:1;
+      ctx.fillStyle=FILL; ctx.beginPath();
+      ctx.moveTo(ts(dx,r.h).x,ts(dx,r.h).y);
+      for (let z=r.h;z>=0;z-=0.1) {
+        const rz=(r.h-z)*1.6/(1+z/r.h); ctx.lineTo(ts(dx+sign*rz,z).x,ts(dx+sign*rz,z).y);
+      }
+      ctx.lineTo(ts(dx,0).x,ts(dx,0).y); ctx.closePath(); ctx.fill();
+    }
+    if (r.mutOK && r.h0>=0) {
+      ctx.fillStyle=FILL; ctx.beginPath();
+      ctx.moveTo(ts(-d,r.h).x,ts(-d,r.h).y);
+      for (let i=0;i<=64;i++) {
+        const t=i/64, xA=-d+2*d*t, s=2*t-1, yA=r.h0+(r.h-r.h0)*s*s;
+        ctx.lineTo(ts(xA,yA).x,ts(xA,yA).y);
+      }
+      ctx.lineTo(ts(d,0).x,ts(d,0).y); ctx.lineTo(ts(-d,0).x,ts(-d,0).y);
+      ctx.closePath(); ctx.fill();
+      ctx.strokeStyle='#2471a3'; ctx.lineWidth=2; ctx.beginPath();
+      ctx.moveTo(ts(-d,r.h).x,ts(-d,r.h).y);
+      for (let i=0;i<=64;i++) {
+        const t=i/64, xA=-d+2*d*t, s=2*t-1, yA=r.h0+(r.h-r.h0)*s*s;
+        ctx.lineTo(ts(xA,yA).x,ts(xA,yA).y);
+      }
+      ctx.stroke();
+      const Opt=ts(0,r.h0); ctx.fillStyle='#e74c3c';
+      ctx.beginPath(); ctx.arc(Opt.x,Opt.y,4,0,2*Math.PI); ctx.fill();
+      ctx.strokeStyle='#c0392b'; ctx.lineWidth=1; ctx.setLineDash([4,3]);
+      ctx.beginPath(); ctx.moveTo(ML,Opt.y); ctx.lineTo(Opt.x,Opt.y); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle='#c0392b'; ctx.font='bold 11px Arial'; ctx.textAlign='left';
+      ctx.fillText(`h\u2080 = ${r.h0.toFixed(2)} m`,Opt.x+6,Opt.y-5);
+    }
+    ctx.strokeStyle='#2471a3'; ctx.lineWidth=2;
+    for (const dx of [-d,d]) {
+      const sign=dx<0?-1:1;
+      ctx.beginPath(); ctx.moveTo(ts(dx,r.h).x,ts(dx,r.h).y);
+      for (let z=r.h;z>=0;z-=0.1) {
+        const rz=(r.h-z)*1.6/(1+z/r.h); ctx.lineTo(ts(dx+sign*rz,z).x,ts(dx+sign*rz,z).y);
+      }
+      ctx.stroke();
+    }
+  }
+
+  ctx.strokeStyle='#2c3e50'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(ML-5,OY); ctx.lineTo(cv.width-MR+5,OY); ctx.stroke();
+  for (let xi=ML-5; xi<cv.width-MR; xi+=10) {
+    ctx.beginPath(); ctx.moveTo(xi,OY); ctx.lineTo(xi-7,OY+9); ctx.stroke();
+  }
+  ctx.strokeStyle='#2c3e50'; ctx.lineWidth=4;
+  rodXs.forEach(x=>{
+    const b=ts(x,0),t2=ts(x,r.h);
+    ctx.beginPath(); ctx.moveTo(b.x,b.y); ctx.lineTo(t2.x,t2.y); ctx.stroke();
+    ctx.fillStyle='#2c3e50';
+    ctx.beginPath(); ctx.moveTo(t2.x-5,t2.y); ctx.lineTo(t2.x+5,t2.y);
+    ctx.lineTo(t2.x,t2.y-12); ctx.closePath(); ctx.fill();
+  });
+
+  ctx.strokeStyle='#27ae60'; ctx.lineWidth=1.8; ctx.setLineDash([5,4]);
+  const hxA=ts(xMin,r.hx),hxB=ts(xMax,r.hx);
+  ctx.beginPath(); ctx.moveTo(hxA.x,hxA.y); ctx.lineTo(hxB.x,hxB.y); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='#27ae60'; ctx.font='bold 11px Arial'; ctx.textAlign='right';
+  ctx.fillText(`hx = ${r.hx} m`,cv.width-MR-2,hxA.y-4);
+
+  const hTX=r.n>1?-d-r.rx*0.42:-r.rx*0.45;
+  const htop=ts(hTX,r.h),hbot=ts(hTX,0);
+  ctx.strokeStyle='#555'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(htop.x,htop.y); ctx.lineTo(hbot.x,hbot.y); ctx.stroke();
+  ctx.save(); ctx.translate((htop.x+hbot.x)/2-8,(htop.y+hbot.y)/2);
+  ctx.rotate(-Math.PI/2); ctx.fillStyle='#555'; ctx.font='11px Arial';
+  ctx.textAlign='center'; ctx.fillText(`h = ${r.h} m`,0,0); ctx.restore();
+
+  if (r.n>=2) {
+    const aL=ts(-d,0),aR=ts(d,0);
+    ctx.strokeStyle='#555'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(aL.x,OY+20); ctx.lineTo(aR.x,OY+20); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(aL.x,OY+14); ctx.lineTo(aL.x,OY+26); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(aR.x,OY+14); ctx.lineTo(aR.x,OY+26); ctx.stroke();
+    ctx.fillStyle='#555'; ctx.font='11px Arial'; ctx.textAlign='center';
+    ctx.fillText(`a = ${r.a} m`,(aL.x+aR.x)/2,OY+37);
+  }
+
+  ctx.fillStyle='#2c3e50'; ctx.font='10.5px Consolas'; ctx.textAlign='left';
+  [`h  = ${r.h} m`,`hx = ${r.hx} m`,`ha = ${r.ha.toFixed(2)} m`,
+   r.n>=2?`h0 = ${r.h0.toFixed(2)} m`:'', r.n>=2?`a  = ${r.a} m`:''
+  ].filter(Boolean).forEach((l,i)=>ctx.fillText(l,8,15+i*14));
+}
+
+// =========================================================
+// RAPORT DE CALCUL DETALIAT
+// =========================================================
+function fr(v)  { return typeof v==='number' ? v.toFixed(2).replace('.',',') : v; }
+function fr3(v) { return typeof v==='number' ? v.toFixed(3).replace('.',',') : v; }
+function fr4(v) { return typeof v==='number' ? v.toFixed(4).replace('.',',') : v; }
+
+function showCalcs() {
+  if (!LAST_R) { alert('Apasă mai întâi Calculează!'); return; }
+  const r=LAST_R;
+  const {n,h,hx,ha,rx} = r;
+
+  // helpere text — fără culori, academic
+  const OK  = txt => `<b>${txt}</b>`;
+  const BAD = txt => `<b><u>${txt}</u></b>`;
+  const VAL = txt => `<b>${txt}</b>`;
+  const FRM = txt => `<span class="calc-formula">${txt}</span>`;
+
+  let html = `
+  <div style="text-align:center;padding:10px 0 16px;border-bottom:2px solid #000;margin-bottom:18px;font-family:'Times New Roman',Times,serif;">
+    <div style="font-size:15pt;font-weight:bold;color:#000;">CALCUL ZONĂ DE PROTECȚIE — PARATRĂSNETE VERTICALE</div>
+    <div style="font-size:11pt;color:#000;margin-top:5px;">Normativul I-7 / NTE 001/03/00 — Anexa 8 &nbsp;|&nbsp; Formulele sunt valabile pentru h &le; 30 m</div>
+  </div>`;
+
+  // DATE DE INTRARE
+  html += `<div class="calc-section">
+    <h4>Date de intrare</h4>
+    <table style="width:100%;font-family:'Times New Roman',Times,serif;font-size:12pt;"><tbody>
+      <tr><td style="width:60%;padding:2px 4px;">Număr de paratrăsnete:</td><td style="padding:2px 4px;"><b>n = ${n}</b></td></tr>
+      <tr><td style="padding:2px 4px;">Înălțimea paratrăsnetului:</td><td style="padding:2px 4px;"><b>h = ${fr(h)} m</b> ${h<=30?'(h &le; 30 m — formule valabile)':'(ATENTIE: h > 30 m)'}</td></tr>
+      <tr><td style="padding:2px 4px;">Înălțimea obiectului protejat:</td><td style="padding:2px 4px;"><b>h<sub>x</sub> = ${fr(hx)} m</b></td></tr>
+      ${n>=2?`<tr><td style="padding:2px 4px;">Distanța dintre paratrăsnete (latura):</td><td style="padding:2px 4px;"><b>a = ${fr(r.a)} m</b></td></tr>`:''}
+      ${n>=3?`<tr><td style="padding:2px 4px;">Diametrul cercului circumscris / Diagonala:</td><td style="padding:2px 4px;"><b>D = ${fr(r.D)} m</b></td></tr>`:''}
+    </tbody></table>
+  </div>`;
+
+  // PAS 1 — MĂRIMI DE BAZĂ
+  html += `<div class="calc-section">
+    <h4>1. Mărimi de bază</h4>
+    <div class="calc-row">Înălțimea activă a tijei:
+      <br>${FRM('h<sub>a</sub> = h &minus; h<sub>x</sub> = ' + fr(h) + ' &minus; ' + fr(hx) + ' = <b>' + fr(ha) + ' m</b>')}
+    </div>
+    <div class="calc-row" style="margin-top:7px;">Raza de protecție la înălțimea h<sub>x</sub> (Formula 12.1, h &le; 30 m):
+      <br>${FRM('r<sub>x</sub> / h<sub>a</sub> = 1,6 / (1 + h<sub>x</sub> / h)')}
+      <br>${FRM('r<sub>x</sub> = h<sub>a</sub> &times; 1,6 / (1 + h<sub>x</sub>/h) = ' + fr(ha) + ' &times; 1,6 / (1 + ' + fr(hx) + '/' + fr(h) + ') = <b>' + fr(rx) + ' m</b>')}
+    </div>
+  </div>`;
+
+  if (n >= 2) {
+    const {d,h0,bx,bxHa,bxHaRaw,hxH,aHa,lambda,c,aMax,aOK,mutOK} = r;
+
+    // PAS 2 — EFECT MUTUAL
+    html += `<div class="calc-section">
+      <h4>2. Efect mutual între 2 paratrăsnete</h4>
+      <div class="calc-row">${FRM('d = a / 2 = ' + fr(r.a) + ' / 2 = <b>' + fr(d) + ' m</b>')} &nbsp;&nbsp; (semidistanța dintre tije)</div>
+      <div class="calc-row" style="margin-top:6px;">Rapoarte adimensionale pentru Fig. A.8.6:
+        <br>${FRM('a / h<sub>a</sub> = ' + fr(r.a) + ' / ' + fr(ha) + ' = <b>' + fr3(aHa) + '</b>')}
+        <br>${FRM('h<sub>x</sub> / h = ' + fr(hx) + ' / ' + fr(h) + ' = <b>' + fr4(hxH) + '</b>')}
+      </div>
+      <div class="calc-row" style="margin-top:6px;">Înălțimea minimă a arcului de protecție la mijlocul distanței dintre tije:
+        <br>${FRM('h<sub>0</sub> = h &minus; a / 7 = ' + fr(h) + ' &minus; ' + fr(r.a) + ' / 7 = ' + fr(h) + ' &minus; ' + fr(r.a/7) + ' = <b>' + fr(h0) + ' m</b>')}
+      </div>
+    </div>`;
+
+    // PAS 3 — VERIFICĂRI
+    html += `<div class="calc-section">
+      <h4>3. Verificarea condițiilor de efect mutual</h4>
+      <div class="calc-row">
+        <b>Condiția (1):</b> distanța maximă admisă între tije &mdash; a &le; 7 &times; h<sub>a</sub>
+        <br>${FRM('7 &times; h<sub>a</sub> = 7 &times; ' + fr(ha) + ' = ' + fr(aMax) + ' m')}
+        <br>a = ${fr(r.a)} m &nbsp; ${aOK ? OK('&le; ' + fr(aMax) + ' m &mdash; condiție îndeplinită, există efect mutual ✓') : BAD('> ' + fr(aMax) + ' m &mdash; condiție neîndeplinită, nu există zonă de legătură ✗')}
+      </div>
+      <div class="calc-row" style="margin-top:6px;">
+        <b>Condiția (2):</b> arcul de protecție la mijloc trebuie să depășească înălțimea obiectului &mdash; h<sub>0</sub> > h<sub>x</sub>
+        <br>h<sub>0</sub> = ${fr(h0)} m &nbsp;&nbsp; h<sub>x</sub> = ${fr(hx)} m
+        <br>${h0>hx ? OK('h<sub>0</sub> > h<sub>x</sub> &mdash; arcul de protecție acoperă obiectul la mijlocul distanței ✓') : BAD('h<sub>0</sub> &le; h<sub>x</sub> &mdash; obiectul nu este protejat la mijlocul distanței ✗')}
+      </div>
+    </div>`;
+
+    // PAS 4 — bx
+    html += `<div class="calc-section">
+      <h4>4. Semilățimea zonei de protecție b<sub>x</sub> (citit din Fig. A.8.6)</h4>
+      <div class="calc-row">
+        Pentru a/h<sub>a</sub> = ${fr3(aHa)} și h<sub>x</sub>/h = ${fr4(hxH)}, valoarea b<sub>x</sub>/h<sub>a</sub> se citește din Fig. A.8.6:
+      </div>
+      ${(NORMA_IMG_A86 || LAST_GRAPH_IMG) ? `<div style="text-align:center;margin:10px 0;">
+        <div style="font-family:'Times New Roman',Times,serif;font-size:11pt;margin-bottom:4px;"><i>Fig. A.8.6 &mdash; Graficul valorii lățimii minime b<sub>x</sub>/h<sub>a</sub></i></div>
+        <img src="${NORMA_IMG_A86 || LAST_GRAPH_IMG}" style="max-width:520px;border:1px solid #aaa;">
+      </div>` : ''}
+      <div class="calc-row" style="margin-top:8px;">
+        ${FRM('b<sub>x</sub>/h<sub>a</sub> = ' + (bxHaRaw||0).toFixed(4).replace('.',',') + ' &asymp; <b>' + (bxHa||0).toFixed(1).replace('.',',') + '</b>')}
+      </div>
+      <div class="calc-row" style="margin-top:7px;">
+        ${FRM('b<sub>x</sub> = (b<sub>x</sub>/h<sub>a</sub>) &times; h<sub>a</sub> = ' + (bxHa||0).toFixed(1).replace('.',',') + ' &times; ' + fr(ha) + ' = <b>' + fr(bx) + ' m</b>')}
+      </div>
+    </div>`;
+
+    // PAS 5 — GEOMETRIA PATRULATERULUI
+    const cVerif = Math.sqrt(d*d + (rx-bx)*(rx-bx));
+    html += `<div class="calc-section">
+      <h4>5. Geometria patrulaterului de legătură</h4>
+      <div class="calc-row">
+        Patrulaterul este definit de patru laturi: <b>d = a/2</b>, <b>r<sub>x</sub></b>, <b>c</b> și <b>b<sub>x</sub></b>.
+        Vârfurile unui sfert simetric (în plan la cota h<sub>x</sub>):
+        <br>&nbsp;&nbsp; O = (0 ; 0) — centrul axei dintre tije
+        <br>&nbsp;&nbsp; P = (d ; 0) = (${fr(d)} ; 0) — poziția tijei
+        <br>&nbsp;&nbsp; B = (d ; r<sub>x</sub>) = (${fr(d)} ; ${fr(rx)}) — capătul razei r<sub>x</sub> trasă perpendicular pe axa de legătură
+        <br>&nbsp;&nbsp; C = (0 ; b<sub>x</sub>) = (0 ; ${fr(bx)}) — extremitatea semilățimii b<sub>x</sub>
+      </div>
+      <div class="calc-row" style="margin-top:7px;">
+        Indicatorul de depășire (distanța O &ndash; limita cercului de protecție pe axa de legătură):
+        <br>${FRM('&lambda; = d &minus; r<sub>x</sub> = ' + fr(d) + ' &minus; ' + fr(rx) + ' = <b>' + fr(lambda) + ' m</b>')}
+        &nbsp; ${lambda>=0?'(cercurile nu se suprapun pe axă)':'(cercurile se suprapun pe axă)'}
+      </div>
+      <div class="calc-row" style="margin-top:7px;">
+        Latura c (distanța de la B la C, din teorema lui Pitagora aplicată în triunghiul B&ndash;C&ndash;proiecție):
+        <br>${FRM('c = &radic;(d&sup2; + (r<sub>x</sub> &minus; b<sub>x</sub>)&sup2;)')}
+        <br>${FRM('c = &radic;(' + fr(d) + '&sup2; + (' + fr(rx) + ' &minus; ' + fr(bx) + ')&sup2;)')}
+        <br>${FRM('c = &radic;(' + fr(d*d) + ' + ' + fr((rx-bx)*(rx-bx)) + ') = &radic;' + fr(d*d+(rx-bx)*(rx-bx)) + ' = <b>' + fr(c) + ' m</b>')}
+      </div>
+    </div>`;
+
+    // FIGURI
+    html += `<div class="calc-section">
+      <h4>6. Vizualizarea zonei de protecție la înălțimea h<sub>x</sub> = ${fr(hx)} m</h4>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-top:10px;">
+        ${LAST_TOP_IMG  ? `<div style="text-align:center;"><div style="font-family:'Times New Roman',Times,serif;font-size:11pt;margin-bottom:4px;"><i>Fig. 1 &mdash; Vedere în plan (la cota h<sub>x</sub>)</i></div><img src="${LAST_TOP_IMG}"  style="max-width:360px;border:1px solid #aaa;"></div>` : ''}
+        ${LAST_SIDE_IMG ? `<div style="text-align:center;"><div style="font-family:'Times New Roman',Times,serif;font-size:11pt;margin-bottom:4px;"><i>Fig. 2 &mdash; Vedere laterală (secțiune prin 2 tije)</i></div><img src="${LAST_SIDE_IMG}" style="max-width:360px;border:1px solid #aaa;"></div>` : ''}
+      </div>
+    </div>`;
+  }
+
+  if (n >= 3) {
+    const {D, Dmax, intOK} = r;
+    const stepNo = n>=2 ? 7 : 2;
+    html += `<div class="calc-section">
+      <h4>${stepNo}. Condiția zonei interioare (${n} paratrăsnete)</h4>
+      <div class="calc-row">
+        ${FRM('D<sub>max</sub> = 8 &times; h<sub>a</sub> = 8 &times; ' + fr(ha) + ' = <b>' + fr(Dmax) + ' m</b>')}
+        <br>D = ${fr(D)} m &nbsp; ${intOK ? OK('&le; ' + fr(Dmax) + ' m &mdash; zona interioară dintre tije este protejată ✓') : BAD('> ' + fr(Dmax) + ' m &mdash; zona interioară NU este protejată ✗')}
+      </div>
+      ${n===3?`<div style="margin-top:5px;font-size:11pt;">Pentru triunghi echilateral cu latura a: D = 2a/&radic;3 &asymp; 1,155 &times; a = 1,155 &times; ${fr(r.a)} = ${fr(2*r.a/Math.sqrt(3))} m</div>`:''}
+      ${n===4?`<div style="margin-top:5px;font-size:11pt;">Pentru pătrat cu latura a: D = a&times;&radic;2 &asymp; 1,414 &times; a = 1,414 &times; ${fr(r.a)} = ${fr(r.a*Math.sqrt(2))} m</div>`:''}
+    </div>`;
+  }
+
+  // CONCLUZII
+  const concStepNo = n>=3 ? (n>=2 ? 8 : 3) : (n>=2 ? 7 : 2);
+  html += `<div class="calc-section">
+    <h4>Concluzii &mdash; zone de protecție la înălțimea h<sub>x</sub> = ${fr(hx)} m</h4>
+    <table style="width:100%;font-family:'Times New Roman',Times,serif;font-size:12pt;"><tbody>
+      <tr><td style="padding:3px 5px;width:60%;">Înălțimea activă a tijei:</td><td style="padding:3px 5px;"><b>h<sub>a</sub> = ${fr(ha)} m</b></td></tr>
+      <tr><td style="padding:3px 5px;">Raza de protecție individuală:</td><td style="padding:3px 5px;"><b>r<sub>x</sub> = ${fr(rx)} m</b></td></tr>`;
+  if (n>=2) {
+    html += `
+      <tr><td style="padding:3px 5px;">Semilățimea zonei la mijlocul distanței:</td><td style="padding:3px 5px;"><b>b<sub>x</sub> = ${fr(r.bx)} m &nbsp; (b<sub>x</sub>/h<sub>a</sub> = ${r.bxHa.toFixed(1).replace('.',',')})</b></td></tr>
+      <tr><td style="padding:3px 5px;">Latura oblică a patrulaterului:</td><td style="padding:3px 5px;"><b>c = ${fr(r.c)} m</b></td></tr>
+      <tr><td style="padding:3px 5px;">Înălțimea arcului de protecție la mijloc:</td><td style="padding:3px 5px;"><b>h<sub>0</sub> = ${fr(r.h0)} m</b></td></tr>
+      <tr><td style="padding:3px 5px;">Efect mutual activ între tije:</td><td style="padding:3px 5px;">${r.mutOK?OK('DA ✓'):BAD('NU ✗')}</td></tr>`;
+  }
+  if (n>=3) {
+    html += `<tr><td style="padding:3px 5px;">Zonă interioară protejată (D &le; 8h<sub>a</sub>):</td><td style="padding:3px 5px;">${r.intOK?OK('DA ✓'):BAD('NU ✗')}</td></tr>`;
+  }
+  html += `</tbody></table></div>`;
+
+  html += `<div style="text-align:center;margin:20px 0 6px">
+    <button onclick="printReport()" style="background:#1a365d;width:auto;padding:10px 36px;font-family:'Times New Roman',Times,serif;font-size:12pt;letter-spacing:0.5px;">
+      Tipărește / Salvează PDF
+    </button>
+  </div>`;
+
+  document.getElementById('modalContent').innerHTML = html;
+  document.getElementById('modalOverlay').style.display = 'block';
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('modalOverlay')) {
+    document.getElementById('modalOverlay').style.display = 'none';
+  }
+}
+
+function printReport() {
+  // Asigurăm că modalul este vizibil înainte de print
+  const overlay = document.getElementById('modalOverlay');
+  const wasHidden = overlay.style.display === 'none';
+  overlay.style.display = 'block';
+  setTimeout(() => {
+    window.print();
+    // Restaurăm starea după dialog print
+    if (wasHidden) overlay.style.display = 'none';
+  }, 150);
+}
+
+// =========================================================
+// INIT
+// =========================================================
+updateInputs();
+calculate();
+</script>
+</body>
+</html>
