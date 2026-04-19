@@ -248,13 +248,17 @@ ipcMain.on('install-update', () => {
 autoUpdater.autoDownload = false;
 autoUpdater.autoInstallOnAppQuit = true;
 
+let isManualCheck = false;
+
 function checkForUpdates(manual = false) {
+  isManualCheck = manual;
   autoUpdater.checkForUpdates().catch(() => {
     if (manual) {
       dialog.showMessageBox(mainWindow, {
-        type: 'info',
+        type: 'warning',
         title: 'Verificare actualizări',
-        message: 'Nu s-a putut verifica. Verificați conexiunea la internet.',
+        message: 'Nu s-a putut verifica.',
+        detail: 'Verificați conexiunea la internet și încercați din nou.',
         buttons: ['OK'],
       });
     }
@@ -279,7 +283,18 @@ autoUpdater.on('update-available', (info) => {
   });
 });
 
-autoUpdater.on('update-not-available', () => { /* silențios */ });
+autoUpdater.on('update-not-available', () => {
+  if (isManualCheck) {
+    isManualCheck = false;
+    dialog.showMessageBox(mainWindow, {
+      type: 'info',
+      title: 'Nicio actualizare disponibilă',
+      message: 'Aplicația este la zi.',
+      detail: `Versiunea instalată (${app.getVersion()}) este cea mai recentă.`,
+      buttons: ['OK'],
+    });
+  }
+});
 
 autoUpdater.on('download-progress', (progress) => {
   const percent = Math.round(progress.percent);
