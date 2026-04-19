@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<title>Actualizare LightningCalcVT</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #0d1f35;
+    color: #cde0f5;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  /* Titlebar drag zone */
+  .titlebar {
+    -webkit-app-region: drag;
+    background: #0a1825;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid rgba(80,140,255,0.2);
+    flex-shrink: 0;
+  }
+  .titlebar-icon { font-size: 18px; }
+  .titlebar-title { font-size: 13px; font-weight: 700; color: #7eb8f7; letter-spacing: 0.5px; }
+  .titlebar-sub { font-size: 11px; color: #5a7ea0; margin-left: auto; }
+
+  .content {
+    flex: 1;
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow-y: auto;
+  }
+
+  /* Version badge */
+  .version-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .version-badge {
+    background: linear-gradient(135deg, #1a4a8a, #0f2d5c);
+    border: 1px solid rgba(80,140,255,0.4);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #7eb8f7;
+  }
+  .version-arrow { color: #4a7aaa; font-size: 16px; }
+  .version-new {
+    background: linear-gradient(135deg, #1a6a3a, #0f3d20);
+    border: 1px solid rgba(60,200,100,0.4);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #5de891;
+  }
+
+  /* Changelog */
+  .changelog-box {
+    background: rgba(10,24,45,0.8);
+    border: 1px solid rgba(80,140,255,0.2);
+    border-radius: 8px;
+    padding: 14px 16px;
+    flex: 1;
+  }
+  .changelog-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #4a7aaa;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+  }
+  .changelog-list { list-style: none; display: flex; flex-direction: column; gap: 7px; }
+  .changelog-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 12.5px;
+    color: #b0ccee;
+    line-height: 1.5;
+  }
+  .changelog-list li::before {
+    content: '✦';
+    color: #3a9eff;
+    font-size: 10px;
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+
+  /* Progress */
+  .progress-section { display: flex; flex-direction: column; gap: 8px; }
+  .progress-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #5a7ea0;
+  }
+  .progress-track {
+    background: rgba(255,255,255,0.07);
+    border-radius: 6px;
+    height: 10px;
+    overflow: hidden;
+    border: 1px solid rgba(80,140,255,0.15);
+  }
+  .progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #1a6aff, #00d4ff);
+    border-radius: 6px;
+    transition: width 0.3s ease;
+    box-shadow: 0 0 8px rgba(0,180,255,0.5);
+  }
+  .progress-fill.done {
+    background: linear-gradient(90deg, #1a9a4a, #00e87a);
+    box-shadow: 0 0 8px rgba(0,220,100,0.5);
+  }
+  .status-text {
+    font-size: 12px;
+    color: #7eb8f7;
+    text-align: center;
+    min-height: 18px;
+  }
+  .status-text.done { color: #5de891; }
+
+  /* Buttons */
+  .btn-row {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    flex-shrink: 0;
+    padding-bottom: 4px;
+  }
+  button {
+    border: none;
+    border-radius: 6px;
+    padding: 8px 20px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.3px;
+    transition: opacity 0.15s;
+  }
+  button:hover { opacity: 0.85; }
+  #btnCancel {
+    background: rgba(255,255,255,0.07);
+    color: #7a9abc;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  #btnInstall {
+    background: linear-gradient(135deg, #1a6a3a, #0f4a28);
+    color: #5de891;
+    border: 1px solid rgba(60,200,100,0.3);
+    display: none;
+  }
+</style>
+</head>
+<body>
+
+<div class="titlebar">
+  <span class="titlebar-icon">⚡</span>
+  <span class="titlebar-title">LightningCalcVT — Actualizare</span>
+  <span class="titlebar-sub" id="titleSub">Se descarcă...</span>
+</div>
+
+<div class="content">
+
+  <div class="version-row">
+    <span class="version-badge" id="verOld">v–</span>
+    <span class="version-arrow">→</span>
+    <span class="version-new" id="verNew">v–</span>
+  </div>
+
+  <div class="changelog-box">
+    <div class="changelog-title">Ce este nou în această versiune</div>
+    <ul class="changelog-list" id="changelogList">
+      <li>Se încarcă notele de versiune...</li>
+    </ul>
+  </div>
+
+  <div class="progress-section">
+    <div class="progress-labels">
+      <span id="lblPercent">0%</span>
+      <span id="lblSpeed"></span>
+      <span id="lblSize"></span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <div class="status-text" id="statusText">Inițializare descărcare...</div>
+  </div>
+
+</div>
+
+<div class="btn-row">
+  <button id="btnCancel" onclick="window.updateAPI.cancel()">Anulează</button>
+  <button id="btnInstall" onclick="window.updateAPI.install()">Repornește și instalează ▶</button>
+</div>
+
+<script>
+  function formatBytes(b) {
+    if (b < 1024*1024) return (b/1024).toFixed(1) + ' KB';
+    return (b/1024/1024).toFixed(1) + ' MB';
+  }
+  function formatSpeed(bps) {
+    if (bps < 1024*1024) return (bps/1024).toFixed(0) + ' KB/s';
+    return (bps/1024/1024).toFixed(1) + ' MB/s';
+  }
+
+  // Receive data from main process
+  window.updateAPI = {
+    setVersions: function(oldV, newV) {
+      document.getElementById('verOld').textContent = 'v' + oldV;
+      document.getElementById('verNew').textContent = 'v' + newV;
+    },
+    setChangelog: function(notes) {
+      var list = document.getElementById('changelogList');
+      if (!notes || notes.length === 0) {
+        list.innerHTML = '<li>Nu există note de versiune disponibile.</li>';
+        return;
+      }
+      list.innerHTML = '';
+      notes.forEach(function(note) {
+        var li = document.createElement('li');
+        li.textContent = note;
+        list.appendChild(li);
+      });
+    },
+    setProgress: function(percent, bytesPerSecond, transferred, total) {
+      var pct = Math.round(percent);
+      document.getElementById('progressFill').style.width = pct + '%';
+      document.getElementById('lblPercent').textContent = pct + '%';
+      document.getElementById('lblSpeed').textContent = formatSpeed(bytesPerSecond);
+      document.getElementById('lblSize').textContent = formatBytes(transferred) + ' / ' + formatBytes(total);
+      document.getElementById('statusText').textContent = 'Se descarcă actualizarea... ' + pct + '%';
+      document.getElementById('titleSub').textContent = pct + '%';
+    },
+    setDone: function() {
+      document.getElementById('progressFill').style.width = '100%';
+      document.getElementById('progressFill').classList.add('done');
+      document.getElementById('lblPercent').textContent = '100%';
+      document.getElementById('lblSpeed').textContent = '';
+      document.getElementById('lblSize').textContent = 'Complet';
+      document.getElementById('statusText').textContent = 'Descărcare finalizată! Gata de instalare.';
+      document.getElementById('statusText').classList.add('done');
+      document.getElementById('titleSub').textContent = 'Gata';
+      document.getElementById('btnInstall').style.display = 'inline-block';
+      document.getElementById('btnCancel').textContent = 'Mai târziu';
+    },
+    cancel: function() { window.close(); },
+    install: function() {
+      var ipc = require('electron').ipcRenderer;
+      ipc.send('install-update');
+    }
+  };
+</script>
+</body>
+</html>

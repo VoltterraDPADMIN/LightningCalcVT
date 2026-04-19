@@ -1,7 +1,69 @@
-const { app, BrowserWindow, Menu, dialog, ipcMain } = require('electron');
+const { app, BrowserWindow, Menu, dialog, ipcMain, shell } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const path = require('path');
 const fs   = require('fs');
+
+let updateWindow = null;
+
+// Changelog hardcodat pe versiuni (fallback dacă GitHub nu returnează release notes)
+const CHANGELOG = {
+  '1.0.2': [
+    'Hartă animată a Rețelei Electrice de Transport (SEN) pe ecranul principal',
+    'Linii de interconexiune internaționale: Ucraina, Moldova, Bulgaria, Serbia, Ungaria',
+    'Granița României corectată geografic (Moldova Nouă, Beba Veche, Herța)',
+    'Zoom hartă mărit — acoperă întreaga fereastră a aplicației',
+    'Zona de protecție afișată în galben (conform normativului)',
+  ],
+};
+
+function openUpdateWindow(oldVersion, newVersion, releaseNotes) {
+  if (updateWindow) { updateWindow.focus(); return; }
+
+  updateWindow = new BrowserWindow({
+    width: 480,
+    height: 400,
+    resizable: false,
+    minimizable: false,
+    maximizable: false,
+    frame: false,
+    transparent: false,
+    alwaysOnTop: true,
+    title: 'Actualizare LightningCalcVT',
+    icon: path.join(__dirname, 'build', 'icon.ico'),
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: false,
+    },
+    parent: mainWindow,
+    modal: false,
+  });
+
+  updateWindow.loadFile('update-progress.html');
+
+  updateWindow.webContents.on('did-finish-load', () => {
+    // Trimite versiunile
+    updateWindow.webContents.executeJavaScript(
+      `window.updateAPI.setVersions(${JSON.stringify(oldVersion)}, ${JSON.stringify(newVersion)})`
+    );
+
+    // Determină changelog: prioritate GitHub release notes, fallback hardcodat
+    let notes = [];
+    if (releaseNotes && typeof releaseNotes === 'string' && releaseNotes.trim()) {
+      // Parsează bullet-urile din markdown release notes
+      notes = releaseNotes.split('\n')
+        .map(l => l.replace(/^[-*•]\s*/, '').trim())
+        .filter(l => l.length > 0 && !l.startsWith('#'));
+    }
+    if (notes.length === 0 && CHANGELOG[newVersion]) {
+      notes = CHANGELOG[newVersion];
+    }
+    updateWindow.webContents.executeJavaScript(
+      `window.updateAPI.setChangelog(${JSON.stringify(notes)})`
+    );
+  });
+
+  updateWindow.on('closed', () => { updateWindow = null; });
+}
 
 let mainWindow;
 
@@ -117,14 +179,18 @@ function checkForUpdates(manual = false) {
 }
 
 autoUpdater.on('update-available', (info) => {
+  const currentVersion = app.getVersion();
   dialog.showMessageBox(mainWindow, {
     type: 'info',
     title: 'Actualizare disponibilă',
-    message: `Versiunea ${info.version} este disponibilă.\nDoriți să o descărcați acum?`,
-    buttons: ['Descarcă', 'Mai târziu'],
+    message: `Versiunea ${info.version} este disponibilă.`,
+    detail: `Versiunea curentă: ${currentVersion}\n\nDoriți să descărcați și să instalați actualizarea?`,
+    buttons: ['Descarcă acum', 'Mai târziu'],
     defaultId: 0,
+    icon: path.join(__dirname, 'build', 'icon.ico'),
   }).then(({ response }) => {
     if (response === 0) {
+      openUpdateWindow(currentVersion, info.version, info.releaseNotes);
       autoUpdater.downloadUpdate();
     }
   });
@@ -148,6 +214,11 @@ autoUpdater.on('download-progress', (progress) => {
     mainWindow.setProgressBar(progress.percent / 100);
     mainWindow.setTitle(`LightningCalcVT — Descărcare actualizare ${percent}%`);
   }
+  if (updateWindow && !updateWindow.isDestroyed()) {
+    updateWindow.webContents.executeJavaScript(
+      `window.updateAPI.setProgress(${progress.percent}, ${progress.bytesPerSecond}, ${progress.transferred}, ${progress.total})`
+    );
+  }
 });
 
 autoUpdater.on('update-downloaded', () => {
@@ -155,17 +226,15 @@ autoUpdater.on('update-downloaded', () => {
     mainWindow.setProgressBar(-1);
     mainWindow.setTitle('LightningCalcVT — Calculator Paratrăsnet');
   }
-  dialog.showMessageBox(mainWindow, {
-    type: 'info',
-    title: 'Actualizare gata',
-    message: 'Actualizarea a fost descărcată.\nAplicația se va reporni pentru a instala noua versiune.',
-    buttons: ['Repornește acum', 'Mai târziu'],
-    defaultId: 0,
-  }).then(({ response }) => {
-    if (response === 0) {
-      autoUpdater.quitAndInstall();
-    }
-  });
+  // Arată butonul "Repornește și instalează" în fereastra de progres
+  if (updateWindow && !updateWindow.isDestroyed()) {
+    updateWindow.webContents.executeJavaScript(`window.updateAPI.setDone()`);
+  }
+});
+
+// Butonul "Repornește și instalează" din fereastra de progres
+ipcMain.on('install-update', () => {
+  autoUpdater.quitAndInstall();
 });
 
 // ──────────────────────────────────────────────
