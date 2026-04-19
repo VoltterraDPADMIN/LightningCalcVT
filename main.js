@@ -79,7 +79,7 @@ function openUpdateWindow(oldVersion, newVersion, releaseNotes) {
     modal: false,
   });
 
-  updateWindow.loadFile(path.join(__dirname, 'update-progress.html'));
+  updateWindow.loadFile(path.join(app.getAppPath(), 'update-progress.html'));
 
   updateWindow.webContents.on('did-finish-load', () => {
     updateWindow.webContents.executeJavaScript(
@@ -126,7 +126,7 @@ function openChangelogPopup(oldVersion, newVersion) {
     modal: false,
   });
 
-  changelogWin.loadFile(path.join(__dirname, 'changelog-popup.html'));
+  changelogWin.loadFile(path.join(app.getAppPath(), 'changelog-popup.html'));
 
   changelogWin.webContents.on('did-finish-load', () => {
     changelogWin.webContents.send('changelog-data', {
@@ -234,7 +234,12 @@ ipcMain.on('get-normativ-images', (event) => {
 
 // Butonul "Repornește și instalează"
 ipcMain.on('install-update', () => {
-  autoUpdater.quitAndInstall(false, true);
+  // Închidem toate ferestrele înainte să pornim installer-ul
+  if (updateWindow  && !updateWindow.isDestroyed())  updateWindow.close();
+  if (changelogWin  && !changelogWin.isDestroyed())  changelogWin.close();
+  if (mainWindow    && !mainWindow.isDestroyed())    mainWindow.hide();
+  // Mic delay ca procesele să se elibereze, apoi instalare silențioasă
+  setTimeout(() => autoUpdater.quitAndInstall(true, true), 800);
 });
 
 // ──────────────────────────────────────────────
