@@ -1,11 +1,15 @@
-const { app, BrowserWindow, Menu, dialog, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, Menu, dialog, ipcMain } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const path = require('path');
 const fs   = require('fs');
 
-let updateWindow = null;
+let mainWindow    = null;
+let updateWindow  = null;
+let changelogWin  = null;
 
-// Changelog hardcodat pe versiuni (fallback dacă GitHub nu returnează release notes)
+// ──────────────────────────────────────────────
+// Changelog hardcodat pe versiuni
+// ──────────────────────────────────────────────
 const CHANGELOG = {
   '1.0.2': [
     'Hartă animată a Rețelei Electrice de Transport (SEN) pe ecranul principal',
@@ -13,50 +17,77 @@ const CHANGELOG = {
     'Granița României corectată geografic (Moldova Nouă, Beba Veche, Herța)',
     'Zoom hartă mărit — acoperă întreaga fereastră a aplicației',
     'Zona de protecție afișată în galben (conform normativului)',
+    'Fereastră pop-up cu progres descărcare actualizări și changelog',
+    'Raport PDF tipărit corect (fix @media print)',
+  ],
+  '1.0.3': [
+    'Pop-up progres descărcare actualizare cu viteză și procent',
+    'Pop-up changelog după repornire — fără reinstalare',
+    'Actualizările nu mai cer parolă (instalare silențioasă)',
+    'Raport PDF tipărit corect — pagina nu mai iese goală',
+    'Indicator de progres la generarea raportului PDF',
   ],
 };
 
+// ──────────────────────────────────────────────
+// Versiune anterioară — pentru popup post-update
+// ──────────────────────────────────────────────
+function getLastVersion() {
+  try {
+    const f = path.join(app.getPath('userData'), 'last-version.json');
+    return JSON.parse(fs.readFileSync(f, 'utf8')).version || null;
+  } catch { return null; }
+}
+function saveCurrentVersion() {
+  try {
+    const f = path.join(app.getPath('userData'), 'last-version.json');
+    fs.writeFileSync(f, JSON.stringify({ version: app.getVersion() }), 'utf8');
+  } catch { /* ignoră */ }
+}
+
+function getChangelogNotes(version) {
+  return CHANGELOG[version] || [`Versiunea ${version} instalată cu succes.`];
+}
+
+// ──────────────────────────────────────────────
+// Fereastra de progres descărcare
+// ──────────────────────────────────────────────
 function openUpdateWindow(oldVersion, newVersion, releaseNotes) {
-  if (updateWindow) { updateWindow.focus(); return; }
+  if (updateWindow && !updateWindow.isDestroyed()) { updateWindow.focus(); return; }
 
   updateWindow = new BrowserWindow({
     width: 480,
-    height: 400,
+    height: 410,
     resizable: false,
     minimizable: false,
     maximizable: false,
     frame: false,
-    transparent: false,
     alwaysOnTop: true,
     title: 'Actualizare LightningCalcVT',
     icon: path.join(__dirname, 'build', 'icon.ico'),
     webPreferences: {
-      nodeIntegration: false,
+      nodeIntegration: true,
       contextIsolation: false,
     },
     parent: mainWindow,
     modal: false,
   });
 
-  updateWindow.loadFile('update-progress.html');
+  updateWindow.loadFile(path.join(__dirname, 'update-progress.html'));
 
   updateWindow.webContents.on('did-finish-load', () => {
-    // Trimite versiunile
     updateWindow.webContents.executeJavaScript(
       `window.updateAPI.setVersions(${JSON.stringify(oldVersion)}, ${JSON.stringify(newVersion)})`
     );
 
-    // Determină changelog: prioritate GitHub release notes, fallback hardcodat
     let notes = [];
     if (releaseNotes && typeof releaseNotes === 'string' && releaseNotes.trim()) {
-      // Parsează bullet-urile din markdown release notes
       notes = releaseNotes.split('\n')
-        .map(l => l.replace(/^[-*•]\s*/, '').trim())
-        .filter(l => l.length > 0 && !l.startsWith('#'));
+        .map(l => l.replace(/^[-*•#]\s*/, '').trim())
+        .filter(l => l.length > 4);
     }
-    if (notes.length === 0 && CHANGELOG[newVersion]) {
-      notes = CHANGELOG[newVersion];
-    }
+    if (notes.length === 0) notes = getChangelogNotes(newVersion);
+
     updateWindow.webContents.executeJavaScript(
       `window.updateAPI.setChangelog(${JSON.stringify(notes)})`
     );
@@ -65,8 +96,46 @@ function openUpdateWindow(oldVersion, newVersion, releaseNotes) {
   updateWindow.on('closed', () => { updateWindow = null; });
 }
 
-let mainWindow;
+// ──────────────────────────────────────────────
+// Popup changelog post-actualizare
+// ──────────────────────────────────────────────
+function openChangelogPopup(oldVersion, newVersion) {
+  if (changelogWin && !changelogWin.isDestroyed()) { changelogWin.focus(); return; }
 
+  changelogWin = new BrowserWindow({
+    width: 460,
+    height: 420,
+    resizable: false,
+    minimizable: false,
+    maximizable: false,
+    frame: false,
+    alwaysOnTop: true,
+    title: 'Noutăți LightningCalcVT',
+    icon: path.join(__dirname, 'build', 'icon.ico'),
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false,
+    },
+    parent: mainWindow,
+    modal: false,
+  });
+
+  changelogWin.loadFile(path.join(__dirname, 'changelog-popup.html'));
+
+  changelogWin.webContents.on('did-finish-load', () => {
+    changelogWin.webContents.send('changelog-data', {
+      oldVersion,
+      newVersion,
+      notes: getChangelogNotes(newVersion),
+    });
+  });
+
+  changelogWin.on('closed', () => { changelogWin = null; });
+}
+
+// ──────────────────────────────────────────────
+// Fereastra principală
+// ──────────────────────────────────────────────
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1280,
@@ -87,13 +156,22 @@ function createWindow() {
 
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
-    // Verifică actualizări la 3 secunde după pornire (silențios)
-    setTimeout(() => checkForUpdates(), 3000);
+
+    // Verifică dacă tocmai s-a instalat o versiune nouă
+    const lastVersion = getLastVersion();
+    const currentVersion = app.getVersion();
+    saveCurrentVersion();
+
+    if (lastVersion && lastVersion !== currentVersion) {
+      // Tocmai s-a actualizat — arată changelog după 1 secundă
+      setTimeout(() => openChangelogPopup(lastVersion, currentVersion), 1000);
+    } else {
+      // Verifică actualizări disponibile după 3 secunde
+      setTimeout(() => checkForUpdates(), 3000);
+    }
   });
 
-  mainWindow.on('closed', () => {
-    mainWindow = null;
-  });
+  mainWindow.on('closed', () => { mainWindow = null; });
 
   const menuTemplate = [
     {
@@ -101,10 +179,7 @@ function createWindow() {
       submenu: [
         { label: 'Minimizează', role: 'minimize' },
         { type: 'separator' },
-        {
-          label: 'Verifică actualizări',
-          click: () => checkForUpdates(true),
-        },
+        { label: 'Verifică actualizări', click: () => checkForUpdates(true) },
         { type: 'separator' },
         { label: 'Ieșire', role: 'quit' }
       ]
@@ -125,14 +200,9 @@ function createWindow() {
 }
 
 // ──────────────────────────────────────────────
-// IPC — citire PNG-uri normativ din directorul exe-ului
+// IPC — PNG-uri normativ
 // ──────────────────────────────────────────────
-
 ipcMain.on('get-normativ-images', (event) => {
-  // Căutăm PNG-urile în mai multe locații posibile:
-  //   1. lângă exe (build de producție instalat)
-  //   2. __dirname (folderul sursă, modul development npm start)
-  //   3. process.cwd() (directorul de lucru curent)
   const candidates = [
     path.dirname(app.getPath('exe')),
     __dirname,
@@ -149,19 +219,21 @@ ipcMain.on('get-normativ-images', (event) => {
       try {
         const data = fs.readFileSync(filePath);
         result[key] = 'data:image/png;base64,' + data.toString('base64');
-        break; // găsit — trece la următorul fișier
-      } catch (e) {
-        // nu există în această locație — încearcă următoarea
-      }
+        break;
+      } catch { /* încearcă următoarea locație */ }
     }
   }
   event.returnValue = result;
 });
 
+// Butonul "Repornește și instalează"
+ipcMain.on('install-update', () => {
+  autoUpdater.quitAndInstall(false, true);
+});
+
 // ──────────────────────────────────────────────
 // Auto-updater
 // ──────────────────────────────────────────────
-
 autoUpdater.autoDownload = false;
 autoUpdater.autoInstallOnAppQuit = true;
 
@@ -196,28 +268,18 @@ autoUpdater.on('update-available', (info) => {
   });
 });
 
-autoUpdater.on('update-not-available', (info) => {
-  // Afișează mesaj doar dacă utilizatorul a apăsat manual "Verifică actualizări"
-  if (info._manual) {
-    dialog.showMessageBox(mainWindow, {
-      type: 'info',
-      title: 'Nicio actualizare',
-      message: 'Aplicația este la zi.',
-      buttons: ['OK'],
-    });
-  }
-});
+autoUpdater.on('update-not-available', () => { /* silențios */ });
 
 autoUpdater.on('download-progress', (progress) => {
   const percent = Math.round(progress.percent);
   if (mainWindow) {
     mainWindow.setProgressBar(progress.percent / 100);
-    mainWindow.setTitle(`LightningCalcVT — Descărcare actualizare ${percent}%`);
+    mainWindow.setTitle(`LightningCalcVT — Descărcare ${percent}%`);
   }
   if (updateWindow && !updateWindow.isDestroyed()) {
     updateWindow.webContents.executeJavaScript(
       `window.updateAPI.setProgress(${progress.percent}, ${progress.bytesPerSecond}, ${progress.transferred}, ${progress.total})`
-    );
+    ).catch(() => {});
   }
 });
 
@@ -226,25 +288,12 @@ autoUpdater.on('update-downloaded', () => {
     mainWindow.setProgressBar(-1);
     mainWindow.setTitle('LightningCalcVT — Calculator Paratrăsnet');
   }
-  // Arată butonul "Repornește și instalează" în fereastra de progres
   if (updateWindow && !updateWindow.isDestroyed()) {
-    updateWindow.webContents.executeJavaScript(`window.updateAPI.setDone()`);
+    updateWindow.webContents.executeJavaScript(`window.updateAPI.setDone()`).catch(() => {});
   }
 });
 
-// Butonul "Repornește și instalează" din fereastra de progres
-ipcMain.on('install-update', () => {
-  autoUpdater.quitAndInstall();
-});
-
 // ──────────────────────────────────────────────
-
 app.whenReady().then(createWindow);
-
-app.on('window-all-closed', () => {
-  app.quit();
-});
-
-app.on('activate', () => {
-  if (mainWindow === null) createWindow();
-});
+app.on('window-all-closed', () => app.quit());
+app.on('activate', () => { if (!mainWindow) createWindow(); });

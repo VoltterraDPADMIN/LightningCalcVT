@@ -8,6 +8,10 @@ Var PasswordValue
 !macroend
 
 Function PasswordPage_Show
+  ; Sari peste pagina de parolă la update silențios (/S) sau dacă e deja instalat
+  IfSilent skip_page
+  IfFileExists "$INSTDIR\LightningCalcVT.exe" skip_page
+
   nsDialogs::Create 1018
   Pop $0
 
@@ -21,12 +25,22 @@ Function PasswordPage_Show
   Pop $PasswordField
 
   nsDialogs::Show
+  Return
+
+  skip_page:
+  Abort
 FunctionEnd
 
 Function PasswordPage_Validate
+  ; Sari validarea la update silențios sau dacă e deja instalat
+  IfSilent skip_validate
+  IfFileExists "$INSTDIR\LightningCalcVT.exe" skip_validate
+
   ${NSD_GetText} $PasswordField $PasswordValue
   StrCmp $PasswordValue "V0lTT3RRA@dmin01020366" correct
   MessageBox MB_OK|MB_ICONSTOP "Parol\u0103 incorect\u0103! Instalarea va fi oprit\u0103."
   Abort
+
   correct:
+  skip_validate:
 FunctionEnd

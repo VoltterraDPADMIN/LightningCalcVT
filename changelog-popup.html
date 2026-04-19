@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<title>Noutăți LightningCalcVT</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #0d1f35;
+    color: #cde0f5;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    user-select: none;
+  }
+  .titlebar {
+    -webkit-app-region: drag;
+    background: #0a1825;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid rgba(80,140,255,0.2);
+    flex-shrink: 0;
+  }
+  .titlebar-icon { font-size: 18px; }
+  .titlebar-title { font-size: 13px; font-weight: 700; color: #7eb8f7; letter-spacing: 0.5px; }
+
+  .content {
+    flex: 1;
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    overflow-y: auto;
+  }
+
+  .welcome-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .checkmark {
+    width: 40px; height: 40px;
+    background: linear-gradient(135deg, #1a6a3a, #0f4a28);
+    border: 2px solid rgba(60,200,100,0.4);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+  .welcome-text h2 {
+    font-size: 15px;
+    font-weight: 700;
+    color: #5de891;
+    margin-bottom: 2px;
+  }
+  .welcome-text p {
+    font-size: 12px;
+    color: #4a7aaa;
+  }
+
+  .version-badges {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .badge-old {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 3px 12px;
+    font-size: 12px;
+    color: #7a9abc;
+    text-decoration: line-through;
+  }
+  .badge-arrow { color: #3a9eff; font-size: 14px; }
+  .badge-new {
+    background: linear-gradient(135deg, #1a4a8a, #0f2d5c);
+    border: 1px solid rgba(80,140,255,0.4);
+    border-radius: 16px;
+    padding: 3px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #7eb8f7;
+  }
+
+  .changelog-box {
+    background: rgba(10,24,45,0.8);
+    border: 1px solid rgba(80,140,255,0.2);
+    border-radius: 8px;
+    padding: 14px 16px;
+    flex: 1;
+  }
+  .changelog-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #4a7aaa;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+  }
+  .changelog-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .changelog-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 12.5px;
+    color: #b0ccee;
+    line-height: 1.5;
+  }
+  .changelog-list li::before {
+    content: '✦';
+    color: #3a9eff;
+    font-size: 10px;
+    margin-top: 3px;
+    flex-shrink: 0;
+  }
+
+  .btn-row {
+    display: flex;
+    justify-content: flex-end;
+    flex-shrink: 0;
+    padding-bottom: 4px;
+  }
+  button {
+    background: linear-gradient(135deg, #1a4a8a, #0f2d5c);
+    color: #7eb8f7;
+    border: 1px solid rgba(80,140,255,0.3);
+    border-radius: 6px;
+    padding: 9px 28px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.3px;
+    transition: opacity 0.15s;
+  }
+  button:hover { opacity: 0.85; }
+</style>
+</head>
+<body>
+<div class="titlebar">
+  <span class="titlebar-icon">⚡</span>
+  <span class="titlebar-title">LightningCalcVT — Actualizat cu succes</span>
+</div>
+
+<div class="content">
+  <div class="welcome-row">
+    <div class="checkmark">✓</div>
+    <div class="welcome-text">
+      <h2>Actualizare instalată cu succes!</h2>
+      <p>Aplicația a fost repornită cu noua versiune.</p>
+    </div>
+  </div>
+
+  <div class="version-badges">
+    <span class="badge-old" id="verOld">v–</span>
+    <span class="badge-arrow">→</span>
+    <span class="badge-new" id="verNew">v–</span>
+  </div>
+
+  <div class="changelog-box">
+    <div class="changelog-title">Ce este nou în această versiune</div>
+    <ul class="changelog-list" id="changelogList">
+      <li>Se încarcă...</li>
+    </ul>
+  </div>
+</div>
+
+<div class="btn-row">
+  <button onclick="window.close()">Începe să lucrezi  →</button>
+</div>
+
+<script>
+  var ipcRenderer = require('electron').ipcRenderer;
+
+  ipcRenderer.on('changelog-data', function(event, data) {
+    document.getElementById('verOld').textContent = 'v' + data.oldVersion;
+    document.getElementById('verNew').textContent = 'v' + data.newVersion;
+    var list = document.getElementById('changelogList');
+    if (!data.notes || data.notes.length === 0) {
+      list.innerHTML = '<li>Nu există note de versiune disponibile.</li>';
+      return;
+    }
+    list.innerHTML = '';
+    data.notes.forEach(function(note) {
+      var li = document.createElement('li');
+      li.textContent = note;
+      list.appendChild(li);
+    });
+  });
+</script>
+</body>
+</html>

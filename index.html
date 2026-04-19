@@ -147,53 +147,65 @@ canvas { border: 1px solid #dee2e6; background: white; border-radius: 4px; displ
 }
 /* ===== PRINT / PDF ===== */
 @media print {
-  /* Ascunde tot ce nu e raportul */
-  body > *:not(#printArea) { display: none !important; }
+  /* Abordare visibility — funcționează indiferent de adâncimea DOM */
+  body * { visibility: hidden !important; }
+  #printArea, #printArea * { visibility: visible !important; }
   #printArea {
-    display: block !important;
-    position: static !important;
+    position: fixed !important;
+    top: 0 !important; left: 0 !important;
     width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
     background: white !important;
-    box-shadow: none !important;
+    margin: 0 !important; padding: 0 !important;
   }
   #modalOverlay {
-    display: block !important;
     position: static !important;
     background: none !important;
     overflow: visible !important;
-    width: 100% !important;
-    height: auto !important;
+    width: 100% !important; height: auto !important;
   }
   #modalBox {
-    margin: 0 !important;
-    max-width: 100% !important;
-    box-shadow: none !important;
-    border-radius: 0 !important;
+    margin: 0 !important; max-width: 100% !important;
+    box-shadow: none !important; border-radius: 0 !important;
   }
   #modalHeader { border-radius: 0 !important; }
   #modalClose, button { display: none !important; }
-  #modalContent {
-    padding: 16px 24px !important;
-    font-size: 11pt !important;
-  }
-  .calc-section {
-    page-break-inside: avoid;
-    break-inside: avoid;
-    margin: 10px 0 !important;
-  }
-  img {
-    max-width: 100% !important;
-    page-break-inside: avoid;
-    break-inside: avoid;
-  }
+  #modalContent { padding: 16px 24px !important; font-size: 11pt !important; }
+  .calc-section { page-break-inside: avoid; break-inside: avoid; margin: 10px 0 !important; }
+  img { max-width: 100% !important; page-break-inside: avoid; break-inside: avoid; }
   .calc-formula { font-size: 10.5pt !important; }
   table { page-break-inside: avoid; break-inside: avoid; }
 }
+
+/* ===== PRINT PROGRESS OVERLAY ===== */
+#printOverlay {
+  display: none;
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(5,15,30,0.82);
+  z-index: 99999;
+  align-items: center; justify-content: center;
+  flex-direction: column; gap: 18px;
+}
+#printOverlay.active { display: flex; }
+.print-spinner {
+  width: 48px; height: 48px;
+  border: 4px solid rgba(80,140,255,0.2);
+  border-top-color: #3a9eff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.print-overlay-text { color: #7eb8f7; font-size: 14px; font-weight: 600; letter-spacing: 0.5px; }
+.print-overlay-sub { color: #4a7aaa; font-size: 12px; }
 </style>
 </head>
 <body>
+
+<!-- PRINT PROGRESS OVERLAY -->
+<div id="printOverlay">
+  <div class="print-spinner"></div>
+  <div class="print-overlay-text">Se generează raportul PDF...</div>
+  <div class="print-overlay-sub" id="printOverlaySub">Pregătire date și imagini</div>
+</div>
 
 <!-- ═══════════════════════════════════════════════ HOME SCREEN ═══ -->
 <div id="homeScreen">
@@ -1550,15 +1562,28 @@ function closeModal(e) {
 }
 
 function printReport() {
-  // Asigurăm că modalul este vizibil înainte de print
-  const overlay = document.getElementById('modalOverlay');
-  const wasHidden = overlay.style.display === 'none';
+  const overlay    = document.getElementById('modalOverlay');
+  const printOvl   = document.getElementById('printOverlay');
+  const printSub   = document.getElementById('printOverlaySub');
+  const wasHidden  = overlay.style.display === 'none' || overlay.style.display === '';
+
+  // 1. Arată overlay-ul de progres
+  printOvl.classList.add('active');
+  printSub.textContent = 'Pregătire date și imagini...';
+
+  // 2. Asigură că modalul cu raportul este vizibil (necesar pentru @media print)
   overlay.style.display = 'block';
+
+  // 3. Lasă browser-ul să randeze, apoi printează
   setTimeout(() => {
-    window.print();
-    // Restaurăm starea după dialog print
-    if (wasHidden) overlay.style.display = 'none';
-  }, 150);
+    printSub.textContent = 'Se deschide dialogul de tipărire...';
+    setTimeout(() => {
+      printOvl.classList.remove('active');
+      window.print();
+      // Restaurează starea după print dialog
+      if (wasHidden) overlay.style.display = 'none';
+    }, 400);
+  }, 300);
 }
 
 // =========================================================
