@@ -5,7 +5,7 @@
 <title>Calcul Zonă de Protecție Paratrăsnete Verticale</title>
 <style>
 * { box-sizing: border-box; }
-body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 16px; background: #eef2f7; color: #2c3e50; }
+body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 16px; background: #0b1929; color: #2c3e50; }
 h1 { color: #111; margin: 0 0 4px; font-size: 21px; }
 h2 { color: #111; font-size: 15px; margin: 14px 0 5px; border-bottom: 2px solid #888; padding-bottom: 4px; }
 h4 { color: #111; margin: 4px 0 6px; font-size: 13px; text-align: center; }
@@ -50,6 +50,101 @@ canvas { border: 1px solid #dee2e6; background: white; border-radius: 4px; displ
 .calc-table tr:nth-child(even) { background:#f5f5f5; }
 .calc-table tr.highlight { background:#e0e0e0 !important; font-weight:bold; }
 
+/* ===== HOME SCREEN ===== */
+#homeScreen {
+  position: fixed; inset: 0; z-index: 1000;
+  background: #020817;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  overflow: hidden;
+}
+#mapCanvas {
+  position: absolute; inset: 0;
+  width: 100% !important; height: 100% !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  pointer-events: none;
+}
+#homeContent {
+  position: relative; z-index: 10;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 18px;
+  padding: 32px 40px;
+  background: rgba(2, 8, 23, 0.72);
+  border: 1px solid rgba(56, 140, 255, 0.25);
+  border-radius: 16px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 0 60px rgba(30, 90, 200, 0.18), 0 0 120px rgba(30, 90, 200, 0.08);
+  max-width: 680px; width: 90%;
+}
+.home-logo { text-align: center; margin-bottom: 4px; }
+.home-logo h1 {
+  font-size: 28px; font-weight: 800; letter-spacing: 2px;
+  background: linear-gradient(135deg, #60c0ff, #a0e0ff, #ffe066);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  margin: 0 0 4px;
+}
+.home-logo p {
+  color: rgba(150, 200, 255, 0.7); font-size: 12px;
+  letter-spacing: 1px; text-transform: uppercase; margin: 0;
+}
+.home-logo .volterra-badge {
+  display: inline-block; margin-top: 6px;
+  color: rgba(180, 150, 255, 0.6); font-size: 10px;
+  letter-spacing: 2px; text-transform: uppercase;
+}
+.home-divider {
+  width: 100%; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(56,140,255,0.4), transparent);
+}
+.home-btn-group { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+.home-btn {
+  position: relative; width: 100%;
+  padding: 16px 24px;
+  border-radius: 10px; border: none; cursor: pointer;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  font-size: 13.5px; font-weight: 600;
+  text-align: left; transition: all 0.25s ease;
+  line-height: 1.4;
+}
+.home-btn-active {
+  background: linear-gradient(135deg, rgba(20,70,160,0.9), rgba(10,40,100,0.95));
+  color: #c8e8ff;
+  border: 1px solid rgba(80,160,255,0.5);
+  box-shadow: 0 0 20px rgba(40,120,255,0.2), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+.home-btn-active:hover {
+  background: linear-gradient(135deg, rgba(30,90,200,0.95), rgba(15,55,130,0.98));
+  box-shadow: 0 0 35px rgba(60,150,255,0.35), inset 0 1px 0 rgba(255,255,255,0.08);
+  transform: translateY(-1px);
+  border-color: rgba(100,180,255,0.7);
+}
+.home-btn-disabled {
+  background: rgba(15, 25, 50, 0.7);
+  color: rgba(100, 140, 180, 0.5);
+  border: 1px solid rgba(50, 80, 130, 0.3);
+  cursor: not-allowed;
+}
+.home-btn .btn-icon { font-size: 18px; margin-right: 10px; vertical-align: middle; }
+.home-btn .btn-label { display: block; }
+.home-btn .btn-sub {
+  display: block; font-size: 11px; font-weight: 400;
+  color: rgba(120,180,255,0.6); margin-top: 3px;
+}
+.coming-soon-badge {
+  position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+  background: rgba(80, 60, 120, 0.6);
+  border: 1px solid rgba(150, 100, 255, 0.3);
+  color: rgba(180, 140, 255, 0.8);
+  font-size: 9px; font-weight: 700; letter-spacing: 1px;
+  padding: 3px 8px; border-radius: 20px; text-transform: uppercase;
+}
+#homeScreen .version-tag {
+  color: rgba(80, 130, 200, 0.45); font-size: 10px;
+  letter-spacing: 1px; margin-top: 4px;
+}
 /* ===== PRINT / PDF ===== */
 @media print {
   /* Ascunde tot ce nu e raportul */
@@ -100,8 +195,381 @@ canvas { border: 1px solid #dee2e6; background: white; border-radius: 4px; displ
 </head>
 <body>
 
-<h1>Calcul Zonă de Protecție — Paratrăsnete Verticale</h1>
-<p style="color:#444;font-size:12px;margin:0">Conform Normativului NTE 001/03/00 — Cap. 12.2, Anexa 8</p>
+<!-- ═══════════════════════════════════════════════ HOME SCREEN ═══ -->
+<div id="homeScreen">
+  <canvas id="mapCanvas"></canvas>
+  <div id="homeContent">
+    <div class="home-logo">
+      <h1>⚡ LightningCalcVT</h1>
+      <p>Calculator zonă de protecție paratrăsnet</p>
+      <span class="volterra-badge">Volterra Design Project</span>
+    </div>
+    <div class="home-divider"></div>
+    <div class="home-btn-group">
+      <button class="home-btn home-btn-active" onclick="document.getElementById('homeScreen').style.display='none';document.getElementById('calcScreen').style.display='block';if(window._mapAnimId)cancelAnimationFrame(window._mapAnimId);">
+        <span class="btn-icon">🗲</span>
+        <span class="btn-label">Calcul zonă de protecție paratrăsnet vertical identic h &lt; 30 m</span>
+        <span class="btn-sub">Normativ NTE 001/03/00 — Cap. 12.2, Anexa 8 &nbsp;|&nbsp; 1–4 paratrăsnete</span>
+      </button>
+      <button class="home-btn home-btn-disabled" disabled>
+        <span class="btn-icon">🗲</span>
+        <span class="btn-label">Calcul zonă de protecție paratrăsnet vertical de înălțimi diferite</span>
+        <span class="btn-sub">Paratrăsnete cu înălțimi diferite — metodologia paratrăsnetului fictiv</span>
+        <span class="coming-soon-badge">În curând</span>
+      </button>
+    </div>
+    <span class="version-tag">v1.0.2 &nbsp;·&nbsp; Voltterra Design Project SRL &nbsp;·&nbsp; Bd. Mamaia nr.23, Etaj 1, Apartament 2</span>
+  </div>
+</div>
+<script>
+// ═══════════════════════ MAP ANIMATION ═══════════════════════════
+window.enterCalc = function() {
+  if (window._mapAnimId) cancelAnimationFrame(window._mapAnimId);
+  document.getElementById('homeScreen').style.display = 'none';
+  document.getElementById('calcScreen').style.display = 'block';
+};
+
+(function() {
+var cv  = document.getElementById('mapCanvas');
+var ctx = cv.getContext('2d');
+var W = 0, H = 0, animRunning = false;
+
+var GEO = { latMin:43.4, latMax:48.6, lngMin:20.0, lngMax:30.1 };
+function project(lng, lat) {
+  var px=-0.12, py=-0.18;
+  var x = px*W + (lng-GEO.lngMin)/(GEO.lngMax-GEO.lngMin)*W*(1-2*px);
+  var y = py*H + (GEO.latMax-lat)/(GEO.latMax-GEO.latMin)*H*(1-2*py);
+  return [x, y];
+}
+
+// Conturul României — sens orar, coordonate geografice corecte
+var BORDER = [
+  // NV: tripoint HU-UA-RO (Tiszabecs/Tisa)
+  [22.13,47.97],
+  // N: Tisa merge E la ~47.93-47.97°N (nu coboară mult pe această secțiune)
+  [22.40,47.97],[22.70,47.95],[23.02,47.97],[23.35,47.97],
+  [23.65,47.95],
+  [23.89,47.93], // Sighetul Marmației — granița lasă Tisa
+  // N: Munții Maramureșului — dip-ul real spre S
+  [24.13,47.82],[24.43,47.70],[24.72,47.65],
+  // N: Urcă NE spre Herța
+  [25.02,47.70],[25.30,47.87],[25.60,48.05],[25.93,48.18],
+  [26.20,48.25],[26.42,48.27], // Herța — punct maxim N
+  // E: granița MD — Prut spre S
+  [26.62,48.17],[26.87,48.05],[27.10,47.97],
+  [27.32,47.93],[27.52,47.93],[27.75,47.97],
+  [28.00,47.97],[28.18,47.83],[28.32,47.67],
+  [28.44,47.50],[28.55,47.32],[28.62,47.13],
+  [28.68,46.97],[28.75,46.78],[28.83,46.58],
+  [28.90,46.40],[28.97,46.20],[29.02,46.00],
+  [28.87,45.82],[28.55,45.62],
+  [28.17,45.47], // Giurgiulești — confluența Prut-Dunăre
+  // SE: brațul Chilia (granița UA) → Sulina
+  [28.45,45.47],[28.77,45.45],[29.10,45.37],[29.43,45.27],[29.70,45.18],
+  // Coasta Mării Negre → S
+  [29.60,44.97],[29.43,44.78],[29.20,44.58],
+  [28.97,44.40],[28.75,44.25],
+  [28.65,44.17],[28.60,44.00],[28.58,43.75], // Vama Veche
+  // S: granița terestră BG în Dobrogea
+  [28.10,43.90],[27.73,43.98],[27.43,44.07],
+  // S: Dunărea — granița BG spre V
+  [27.33,44.20],[26.97,44.17],[26.65,44.07],[26.37,44.02],
+  [25.97,43.90], // Giurgiu
+  [25.65,43.72],[25.37,43.65], // Zimnicea — minim lat S
+  [24.87,43.73],[24.52,43.77],
+  [23.95,43.75],[23.30,43.80],
+  [22.93,43.98], // Calafat
+  [22.65,44.55],
+  [22.52,44.68], // Porțile de Fier
+  // V: cheile Dunării — granița urmează Dunărea spre V până la Moldova Nouă
+  [22.22,44.72],[21.88,44.73],
+  [21.67,44.73], // Moldova Nouă — granița lasă Dunărea, urcă spre N
+  // V: granița RS → N, prin Munții Banatului
+  [21.48,44.93],[21.32,45.12],[21.13,45.30],
+  [21.00,45.48],[20.87,45.65],[20.70,45.78],
+  [20.52,45.87],[20.37,45.90],
+  [20.25,45.93], // Beba Veche — punct maxim V
+  // V: granița HU → N
+  [20.27,46.13],[20.43,46.33],[20.62,46.52],
+  [20.82,46.72],[21.00,46.90],
+  [21.18,47.08],[21.43,47.27],[21.63,47.43],
+  [21.82,47.58],[22.00,47.70],[22.12,47.83],
+  [22.13,47.97]
+];
+
+// Stații — chei fără diacritice (evită bug encoding)
+var ST = {
+  'Rosiori':[23.73,47.43,400],'Baia Mare III':[23.57,47.67,220],
+  'Tihau':[23.28,47.27,220],'Salaj':[23.05,47.18,220],
+  'Gadalin':[23.55,46.87,400],'Cluj Est':[23.70,46.78,400],
+  'Cluj Floresti':[23.48,46.77,220],'Mariselu':[24.05,47.17,220],
+  'Campia Turzii':[23.88,46.55,220],'Oradea Sud':[21.93,47.03,400],
+  'Nadab':[21.72,46.50,400],'Iernut':[24.47,46.45,400],
+  'Ungheni':[24.87,46.52,220],'Fantanele':[24.33,46.38,220],
+  'Gheorgheni':[25.58,46.72,220],'Stejaru':[26.43,46.92,220],
+  'Dumbrava':[26.60,46.73,220],'Gutinas':[26.75,46.52,400],
+  'Ungheni Vama':[27.50,46.35,220],'Suceava':[26.25,47.65,400],
+  'Siret':[26.07,47.92,110],'Stanca':[26.72,47.45,110],
+  'Roman Nord':[26.92,46.92,220],'Bacau Sud':[26.97,46.53,220],
+  'FAI Iasi':[27.63,47.17,220],'Tutora':[27.53,47.00,220],
+  'Husi':[28.07,46.67,220],'Munteni':[27.73,45.97,220],
+  'Falciu':[28.18,46.30,110],'Isaccea':[28.47,45.27,400],
+  'Tulcea Vest':[28.80,45.18,400],'Constanta Nord':[28.60,44.18,400],
+  'Medgidia Sud':[28.27,44.25,400],'Stupina':[28.58,44.27,220],
+  'Cernavoda':[28.03,44.33,400],'Pelicanu':[27.47,44.47,400],
+  'Gura Ialomitei':[27.33,44.63,400],'Lacu Sarat':[27.83,45.37,400],
+  'Filesti':[27.77,45.50,220],'Barbosi':[28.03,45.48,220],
+  'Smardan':[27.97,45.37,400],'Bucuresti Sud':[26.07,44.37,400],
+  'Fundeni':[26.17,44.47,220],'Mostistea':[26.87,44.37,220],
+  'Ghizdaru':[25.97,44.18,220],'Turnu Magurele':[24.88,43.75,220],
+  'Slatina':[24.37,44.43,400],'Draganesti Olt':[24.52,44.17,220],
+  'Brazi Vest':[26.03,44.92,400],'Pitesti Sud':[24.87,44.85,220],
+  'Bradu':[24.97,44.87,220],'Brasov':[25.62,45.65,400],
+  'Darste':[25.67,45.67,400],'Stalpu':[26.07,45.03,400],
+  'Teleajen':[26.02,45.13,400],'Targoviste':[25.45,44.93,220],
+  'Stuparei':[24.63,45.07,220],'Raureni':[24.38,45.12,220],
+  'Arefu':[24.60,45.37,220],'CHE Vidraru':[24.62,45.35,220],
+  'Sibiu Sud':[24.15,45.77,400],'Sugag':[23.63,45.68,220],
+  'Galceag':[23.30,45.82,220],'Lotru':[23.97,45.35,220],
+  'Tantareni':[23.28,44.57,400],'Urechesti':[24.07,44.63,400],
+  'Portile de Fier':[22.52,44.68,400],'Craiova Nord':[23.80,44.33,220],
+  'Isalnita':[23.72,44.28,220],'Gradiste':[23.58,44.22,220],
+  'Gura Vaii':[22.62,44.63,220],'Ostrovu Mare':[22.47,44.20,220],
+  'Cetate':[23.03,44.10,220],'Calafat':[22.95,43.98,220],
+  'Barca':[23.72,44.07,220],'Targu Jiu Nord':[23.27,45.03,220],
+  'Sardanesti':[23.60,44.38,220],'Arad':[21.32,46.17,400],
+  'Mintia':[22.87,45.90,400],'Otelarii':[23.22,45.52,220],
+  'Hasdat':[23.13,45.47,220],'Pestis':[22.93,45.50,220],
+  'Paroseni':[23.07,45.50,220],'Baru Mare':[22.82,45.40,220],
+  'Retezat':[22.87,45.38,220],'Calea Aradului':[23.58,46.03,220],
+  'Alba Iulia':[23.57,46.07,220],'Resita':[21.88,45.30,400],
+  'Iaz':[21.98,45.58,220],'Timisoara':[21.23,45.75,400],
+  'Sacalaz':[21.27,45.77,220],'Jimbolia':[20.72,45.78,110],
+  'Anina':[21.85,45.08,220],
+  // Stații internaționale (interconexiuni)
+  'Mukacevo UA':[22.72,48.43,400],'Porubnoe UA':[24.67,48.55,110],
+  'Balti MD':[27.92,47.76,400],'Vulcanesti MD':[28.40,45.68,400],
+  'Cioara MD':[28.55,47.23,110],'Gotesti MD':[28.48,46.55,110],
+  'Costesti MD':[27.07,47.87,110],'Varna BG':[27.92,43.20,400],
+  'Dobrudja BG':[27.22,43.70,400],'Djerdap RS':[22.25,44.67,400],
+  'Kusiak RS':[22.25,44.60,400],'Pancevo RS':[20.63,44.87,400],
+  'Kikinda RS':[20.47,45.83,110],'Sanderfalva HU':[20.17,46.37,400],
+  'Bekescsaba HU':[21.10,46.68,400]
+};
+
+var LINES = [
+  // 400 kV — intern
+  ['Rosiori','Gadalin',400],
+  ['Gadalin','Iernut',400],['Gadalin','Cluj Est',400],
+  ['Iernut','Sibiu Sud',400],['Iernut','Gutinas',400],
+  ['Sibiu Sud','Brasov',400],['Brasov','Darste',400],
+  ['Darste','Stalpu',400],['Gutinas','Smardan',400],
+  ['Gutinas','Barca',400],['Gutinas','Brasov',400],
+  ['Smardan','Isaccea',400],['Smardan','Gura Ialomitei',400],
+  ['Isaccea','Tulcea Vest',400],
+  ['Tulcea Vest','Constanta Nord',400],
+  ['Gura Ialomitei','Lacu Sarat',400],['Gura Ialomitei','Cernavoda',400],
+  ['Cernavoda','Constanta Nord',400],['Cernavoda','Pelicanu',400],
+  ['Cernavoda','Medgidia Sud',400],['Cernavoda','Bucuresti Sud',400],
+  ['Medgidia Sud','Stupina',400],['Bucuresti Sud','Brazi Vest',400],
+  ['Bucuresti Sud','Pelicanu',400],
+  ['Brazi Vest','Teleajen',400],['Brazi Vest','Stalpu',400],
+  ['Brazi Vest','Pitesti Sud',400],
+  ['Slatina','Draganesti Olt',400],['Draganesti Olt','Tantareni',400],
+  ['Tantareni','Urechesti',400],['Tantareni','Sibiu Sud',400],
+  ['Urechesti','Portile de Fier',400],
+  ['Portile de Fier','Resita',400],
+  ['Resita','Mintia',400],['Resita','Timisoara',400],
+  ['Mintia','Arad',400],['Mintia','Sibiu Sud',400],
+  ['Arad','Nadab',400],
+  ['Nadab','Oradea Sud',400],
+  ['Oradea Sud','Gadalin',400],['Gutinas','Suceava',400],
+  ['Suceava','Roman Nord',400],
+  ['Roman Nord','Bacau Sud',400],['Bacau Sud','Gutinas',400],
+  // 220 kV — intern
+  ['Baia Mare III','Rosiori',220],['Baia Mare III','Tihau',220],
+  ['Tihau','Salaj',220],['Salaj','Cluj Floresti',220],
+  ['Cluj Floresti','Mariselu',220],['Mariselu','Campia Turzii',220],
+  ['Campia Turzii','Iernut',220],['Iernut','Ungheni',220],
+  ['Ungheni','Fantanele',220],['Fantanele','Gheorgheni',220],
+  ['Gheorgheni','Stejaru',220],['Stejaru','Dumbrava',220],
+  ['Dumbrava','Gutinas',220],
+  ['FAI Iasi','Tutora',220],['Tutora','Husi',220],
+  ['Husi','Munteni',220],['Munteni','Barca',220],
+  ['Alba Iulia','Iernut',220],['Alba Iulia','Mintia',220],
+  ['Mintia','Otelarii',220],['Otelarii','Hasdat',220],
+  ['Hasdat','Pestis',220],['Pestis','Paroseni',220],
+  ['Paroseni','Baru Mare',220],['Baru Mare','Retezat',220],
+  ['Retezat','Tantareni',220],['Mintia','Calea Aradului',220],
+  ['Calea Aradului','Arad',220],['Mintia','Timisoara',220],
+  ['Timisoara','Sacalaz',220],['Resita','Iaz',220],
+  ['Iaz','Anina',220],['Anina','Portile de Fier',220],
+  ['Portile de Fier','Gura Vaii',220],['Gura Vaii','Ostrovu Mare',220],
+  ['Ostrovu Mare','Cetate',220],['Cetate','Calafat',220],
+  ['Urechesti','Targu Jiu Nord',220],['Urechesti','Sardanesti',220],
+  ['Sardanesti','Isalnita',220],['Isalnita','Craiova Nord',220],
+  ['Craiova Nord','Gradiste',220],['Gradiste','Slatina',220],
+  ['Slatina','Draganesti Olt',220],['Draganesti Olt','Turnu Magurele',220],
+  ['Turnu Magurele','Ghizdaru',220],['Ghizdaru','Bucuresti Sud',220],
+  ['Pitesti Sud','Bradu',220],['Bradu','Targoviste',220],
+  ['Bradu','Stuparei',220],['Stuparei','Raureni',220],
+  ['Raureni','Arefu',220],['Arefu','CHE Vidraru',220],
+  ['Lotru','Sibiu Sud',220],['Galceag','Sugag',220],
+  ['Sugag','Sibiu Sud',220],['Bucuresti Sud','Fundeni',220],
+  ['Bucuresti Sud','Mostistea',220],['Mostistea','Gura Ialomitei',220],
+  ['Lacu Sarat','Filesti',220],['Filesti','Barbosi',220],
+  ['Barbosi','Smardan',220],['Stejaru','Roman Nord',220],
+  ['Constanta Nord','Medgidia Sud',220],
+  // 400 kV — interconexiuni internationale
+  ['Rosiori','Mukacevo UA',400],
+  ['Isaccea','Vulcanesti MD',400],
+  ['Isaccea','Varna BG',400],
+  ['Isaccea','Dobrudja BG',400],
+  ['Portile de Fier','Djerdap RS',400],
+  ['Portile de Fier','Kusiak RS',400],
+  ['Resita','Pancevo RS',400],
+  ['Arad','Sanderfalva HU',400],
+  ['Nadab','Bekescsaba HU',400],
+  ['Suceava','Balti MD',400],
+  // 110 kV — interconexiuni internationale
+  ['Jimbolia','Kikinda RS',110],
+  ['Husi','Cioara MD',110],
+  ['Falciu','Gotesti MD',110],
+  ['Stanca','Costesti MD',110],
+  ['Siret','Porubnoe UA',110]
+];
+
+function lineColor(v) {
+  if (v===400) return {line:'rgba(58,126,224,0.45)', p:'rgba(100,190,255,1)', glow:'rgba(80,160,255,0.8)'};
+  if (v===220) return {line:'rgba(40,180,100,0.35)', p:'rgba(80,230,140,1)',  glow:'rgba(60,210,110,0.7)'};
+  return             {line:'rgba(170,90,210,0.28)', p:'rgba(210,140,255,1)', glow:'rgba(190,110,255,0.6)'};
+}
+
+function Particle(a, b, v) {
+  this.a=a; this.b=b; this.v=v;
+  this.t=Math.random();
+  this.speed=(v===400?0.0022:v===220?0.0016:0.0010)+Math.random()*0.0008;
+  this.trail=[];
+}
+Particle.prototype.update=function(){
+  this.trail.push(this.t);
+  if(this.trail.length>10) this.trail.shift();
+  this.t+=this.speed;
+  if(this.t>=1){this.t=0;this.trail=[];}
+};
+Particle.prototype.draw=function(cx){
+  var col=lineColor(this.v);
+  var ax=this.a[0],ay=this.a[1],bx=this.b[0],by=this.b[1];
+  for(var i=0;i<this.trail.length;i++){
+    var tp=this.trail[i];
+    var tx=ax+(bx-ax)*tp, ty=ay+(by-ay)*tp;
+    var alpha=(i/this.trail.length)*0.45;
+    cx.beginPath();cx.arc(tx,ty,1.5,0,6.2832);
+    cx.fillStyle='rgba(180,220,255,'+alpha+')';cx.fill();
+  }
+  var x=ax+(bx-ax)*this.t, y=ay+(by-ay)*this.t;
+  var r=this.v===400?9:6;
+  var g=cx.createRadialGradient(x,y,0,x,y,r);
+  g.addColorStop(0,col.glow);g.addColorStop(1,'rgba(0,0,0,0)');
+  cx.fillStyle=g;cx.beginPath();cx.arc(x,y,r,0,6.2832);cx.fill();
+  cx.fillStyle='#fff';cx.beginPath();cx.arc(x,y,this.v===400?2.2:1.6,0,6.2832);cx.fill();
+};
+
+var particles=[];
+function buildParticles(){
+  particles=[];
+  for(var li=0;li<LINES.length;li++){
+    var na=LINES[li][0],nb=LINES[li][1],v=LINES[li][2];
+    if(!ST[na]||!ST[nb]) continue;
+    var a=project(ST[na][0],ST[na][1]);
+    var b=project(ST[nb][0],ST[nb][1]);
+    var n=v===400?3:v===220?2:1;
+    for(var i=0;i<n;i++){
+      var p=new Particle(a,b,v); p.t=i/n+Math.random()*0.1; particles.push(p);
+      if(v===400){var pr=new Particle(b,a,v);pr.t=(i/n+0.5)%1;particles.push(pr);}
+    }
+  }
+}
+
+var pulse=0;
+function draw(){
+  if(!animRunning) return;
+  ctx.clearRect(0,0,W,H);
+  var bg=ctx.createRadialGradient(W*0.45,H*0.48,0,W*0.45,H*0.48,Math.max(W,H)*0.7);
+  bg.addColorStop(0,'#051830');bg.addColorStop(1,'#020812');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+  // Grid
+  ctx.strokeStyle='rgba(30,70,140,0.07)';ctx.lineWidth=0.5;
+  for(var gx=0;gx<W;gx+=60){ctx.beginPath();ctx.moveTo(gx,0);ctx.lineTo(gx,H);ctx.stroke();}
+  for(var gy=0;gy<H;gy+=60){ctx.beginPath();ctx.moveTo(0,gy);ctx.lineTo(W,gy);ctx.stroke();}
+  // Romania border
+  ctx.beginPath();
+  for(var bi=0;bi<BORDER.length;bi++){
+    var pt=project(BORDER[bi][0],BORDER[bi][1]);
+    if(bi===0)ctx.moveTo(pt[0],pt[1]);else ctx.lineTo(pt[0],pt[1]);
+  }
+  ctx.closePath();
+  ctx.fillStyle='rgba(12,35,80,0.50)';ctx.fill();
+  ctx.strokeStyle='rgba(60,130,220,0.75)';ctx.lineWidth=1.8;ctx.stroke();
+  // Linii electrice
+  ctx.setLineDash([]);
+  for(var li=0;li<LINES.length;li++){
+    var na=LINES[li][0],nb=LINES[li][1],lv=LINES[li][2];
+    if(!ST[na]||!ST[nb]) continue;
+    var pa=project(ST[na][0],ST[na][1]);
+    var pb=project(ST[nb][0],ST[nb][1]);
+    var col=lineColor(lv);
+    ctx.strokeStyle=col.line;ctx.lineWidth=lv===400?1.5:lv===220?1.0:0.6;
+    if(lv===110)ctx.setLineDash([4,4]);else ctx.setLineDash([]);
+    ctx.beginPath();ctx.moveTo(pa[0],pa[1]);ctx.lineTo(pb[0],pb[1]);ctx.stroke();
+  }
+  ctx.setLineDash([]);
+  // Particule
+  for(var pi=0;pi<particles.length;pi++){particles[pi].update();particles[pi].draw(ctx);}
+  // Statii
+  pulse+=0.025;if(pulse>6.2832)pulse-=6.2832;
+  var stNames=Object.keys(ST);
+  for(var si=0;si<stNames.length;si++){
+    var sname=stNames[si];
+    var slng=ST[sname][0],slat=ST[sname][1],sv=ST[sname][2];
+    var sp=project(slng,slat);
+    var sx=sp[0],sy=sp[1];
+    var isIntl=(sname.indexOf(' UA')!==-1||sname.indexOf(' MD')!==-1||
+                sname.indexOf(' BG')!==-1||sname.indexOf(' RS')!==-1||sname.indexOf(' HU')!==-1);
+    var sr=sv===400?5:sv===220?3.5:2.5;
+    var glowR=sr+4+Math.sin(pulse)*2;
+    var scol=isIntl?'rgba(255,120,50,':(sv===400?'rgba(255,220,60,':'rgba(80,180,255,');
+    var sg=ctx.createRadialGradient(sx,sy,0,sx,sy,glowR+5);
+    sg.addColorStop(0,scol+'0.55)');sg.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=sg;ctx.beginPath();ctx.arc(sx,sy,glowR+5,0,6.2832);ctx.fill();
+    ctx.beginPath();ctx.arc(sx,sy,sr,0,6.2832);
+    ctx.fillStyle=scol+'0.95)';ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,0.45)';ctx.lineWidth=0.6;ctx.stroke();
+  }
+  window._mapAnimId=requestAnimationFrame(draw);
+}
+
+function resize(){
+  W=cv.width=window.innerWidth||screen.width||1280;
+  H=cv.height=window.innerHeight||screen.height||860;
+  buildParticles();
+}
+function startAnim(){
+  animRunning=true; resize(); draw();
+}
+window.addEventListener('resize',resize);
+window._startAnim=startAnim;
+setTimeout(startAnim,0);
+})();
+</script>
+
+<!-- ════════════════════════════════ CALC SCREEN ════════════════ -->
+<div id="calcScreen" style="display:none">
+<div style="display:flex;align-items:center;gap:14px;margin-bottom:8px;">
+  <button onclick="document.getElementById('calcScreen').style.display='none';document.getElementById('homeScreen').style.display='flex';requestAnimationFrame(function(){requestAnimationFrame(window._startAnim||function(){})});" style="background:rgba(30,70,150,0.7);color:#9cc8ff;border:1px solid rgba(80,140,255,0.4);padding:7px 16px;border-radius:6px;cursor:pointer;font-size:12px;width:auto;margin:0;font-weight:600;letter-spacing:0.5px;">← Acasă</button>
+  <h1 style="margin:0;flex:1;color:#9cc8ff;">Calcul Zonă de Protecție — Paratrăsnete Verticale</h1>
+</div>
+<p style="color:rgba(120,180,255,0.65);font-size:12px;margin:0">Conform Normativului NTE 001/03/00 — Cap. 12.2, Anexa 8</p>
 
 <div class="note">
   <strong>⚠️ Domeniu de valabilitate:</strong> Calcul integral numai pentru <strong>h ≤ 30 m</strong>.
@@ -605,8 +1073,8 @@ function drawTopView(r) {
   ctx.beginPath(); ctx.moveTo(0, CY); ctx.lineTo(cv.width, CY); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(CX, 0); ctx.lineTo(CX, cv.height); ctx.stroke();
 
-  const FILL   = 'rgba(52,152,219,0.38)';
-  const STROKE = '#1a5276';
+  const FILL   = 'rgba(255,193,7,0.28)';
+  const STROKE = '#cc8800';
 
   // ---- Helper: octogon de legătură pentru perechea (ri, rj) ----
   function connectionPoly(ri, rj, rxv, bxv) {
@@ -683,7 +1151,7 @@ function drawTopView(r) {
   // PASUL 2 — contururi patrulaterale (pentru fiecare pereche)
   // ============================================================
   if (r.n >= 2 && r.mutOK && r.bx > 0) {
-    ctx.strokeStyle = 'rgba(26,82,118,0.65)';
+    ctx.strokeStyle = 'rgba(204,136,0,0.65)';
     ctx.lineWidth = 1.2;
     ctx.setLineDash([]);
 
@@ -734,7 +1202,7 @@ function drawTopView(r) {
   if (r.n >= 3) {
     ctx.textAlign = 'center';
     if (r.intOK) {
-      ctx.fillStyle = '#1a5276'; ctx.font = 'bold 11px Arial';
+      ctx.fillStyle = '#7a5000'; ctx.font = 'bold 11px Arial';
       ctx.fillText('INTERIOR', CX, CY+5);
       ctx.font = '10px Arial';
       ctx.fillText('D ≤ 8·ha ✓', CX, CY+18);
@@ -802,14 +1270,14 @@ function drawSideView(r) {
     ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y); ctx.stroke();
   }
 
-  const FILL='rgba(52,152,219,0.38)';
+  const FILL='rgba(255,193,7,0.28)';
 
   if (r.n === 1) {
     ctx.fillStyle=FILL; ctx.beginPath();
     ctx.moveTo(ts(0,r.h).x,ts(0,r.h).y);
     for (let z=r.h; z>=0; z-=0.12) { const rz=(r.h-z)*1.6/(1+z/r.h); ctx.lineTo(ts(rz,z).x,ts(rz,z).y); }
     for (let z=0; z<=r.h; z+=0.12) { const rz=(r.h-z)*1.6/(1+z/r.h); ctx.lineTo(ts(-rz,z).x,ts(-rz,z).y); }
-    ctx.closePath(); ctx.fill(); ctx.strokeStyle='#2471a3'; ctx.lineWidth=2; ctx.stroke();
+    ctx.closePath(); ctx.fill(); ctx.strokeStyle='#cc8800'; ctx.lineWidth=2; ctx.stroke();
   } else {
     for (const dx of [-d,d]) {
       const sign=dx<0?-1:1;
@@ -829,7 +1297,7 @@ function drawSideView(r) {
       }
       ctx.lineTo(ts(d,0).x,ts(d,0).y); ctx.lineTo(ts(-d,0).x,ts(-d,0).y);
       ctx.closePath(); ctx.fill();
-      ctx.strokeStyle='#2471a3'; ctx.lineWidth=2; ctx.beginPath();
+      ctx.strokeStyle='#cc8800'; ctx.lineWidth=2; ctx.beginPath();
       ctx.moveTo(ts(-d,r.h).x,ts(-d,r.h).y);
       for (let i=0;i<=64;i++) {
         const t=i/64, xA=-d+2*d*t, s=2*t-1, yA=r.h0+(r.h-r.h0)*s*s;
@@ -844,7 +1312,7 @@ function drawSideView(r) {
       ctx.fillStyle='#c0392b'; ctx.font='bold 11px Arial'; ctx.textAlign='left';
       ctx.fillText(`h\u2080 = ${r.h0.toFixed(2)} m`,Opt.x+6,Opt.y-5);
     }
-    ctx.strokeStyle='#2471a3'; ctx.lineWidth=2;
+    ctx.strokeStyle='#cc8800'; ctx.lineWidth=2;
     for (const dx of [-d,d]) {
       const sign=dx<0?-1:1;
       ctx.beginPath(); ctx.moveTo(ts(dx,r.h).x,ts(dx,r.h).y);
@@ -1099,5 +1567,6 @@ function printReport() {
 updateInputs();
 calculate();
 </script>
+</div><!-- /calcScreen -->
 </body>
 </html>
