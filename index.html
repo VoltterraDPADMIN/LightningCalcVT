@@ -253,7 +253,7 @@ canvas { border: 1px solid #dee2e6; background: white; border-radius: 4px; displ
         <span class="coming-soon-badge">În curând</span>
       </button>
     </div>
-    <span class="version-tag">v1.0.2 &nbsp;·&nbsp; Voltterra Design Project SRL &nbsp;·&nbsp; Bd. Mamaia nr.23, Etaj 1, Apartament 2</span>
+    <span class="version-tag" id="appVersionTag">v1.0.4 &nbsp;·&nbsp; Voltterra Design Project SRL &nbsp;·&nbsp; Bd. Mamaia nr.23, Etaj 1, Apartament 2</span>
   </div>
 </div>
 <script>
@@ -1614,6 +1614,17 @@ function printReport() {
 // =========================================================
 updateInputs();
 calculate();
+
+// Versiune dinamică în footer
+(function() {
+  try {
+    var ver = window.electronAPI && window.electronAPI.getAppVersion ? window.electronAPI.getAppVersion() : null;
+    if (ver) {
+      var el = document.getElementById('appVersionTag');
+      if (el) el.innerHTML = 'v' + ver + ' &nbsp;&middot;&nbsp; Voltterra Design Project SRL &nbsp;&middot;&nbsp; Bd. Mamaia nr.23, Etaj 1, Apartament 2';
+    }
+  } catch(e) {}
+})();
 </script>
 </div><!-- /calcScreen -->
 </body>

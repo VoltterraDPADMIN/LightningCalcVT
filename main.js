@@ -88,9 +88,16 @@ function openUpdateWindow(oldVersion, newVersion, releaseNotes) {
 
     let notes = [];
     if (releaseNotes && typeof releaseNotes === 'string' && releaseNotes.trim()) {
-      notes = releaseNotes.split('\n')
-        .map(l => l.replace(/^[-*•#]\s*/, '').trim())
-        .filter(l => l.length > 4);
+      // GitHub returnează release notes ca HTML — extragem textul din <li>
+      const liItems = releaseNotes.match(/<li>(.*?)<\/li>/gi);
+      if (liItems && liItems.length > 0) {
+        notes = liItems.map(m => m.replace(/<[^>]+>/g, '').trim()).filter(l => l.length > 2);
+      } else {
+        // Fallback: markdown plain text
+        notes = releaseNotes.split('\n')
+          .map(l => l.replace(/^[-*•#]\s*/, '').replace(/<[^>]+>/g, '').trim())
+          .filter(l => l.length > 4);
+      }
     }
     if (notes.length === 0) notes = getChangelogNotes(newVersion);
 
@@ -208,6 +215,10 @@ function createWindow() {
 // ──────────────────────────────────────────────
 // IPC — PNG-uri normativ
 // ──────────────────────────────────────────────
+ipcMain.on('get-app-version', (event) => {
+  event.returnValue = app.getVersion();
+});
+
 ipcMain.on('get-normativ-images', (event) => {
   const candidates = [
     path.dirname(app.getPath('exe')),
