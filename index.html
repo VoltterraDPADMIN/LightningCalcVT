@@ -186,6 +186,15 @@ canvas { border: 1px solid #dee2e6; background: white; border-radius: 4px; displ
   }
   .calc-section { page-break-inside: avoid; break-inside: avoid; margin: 10px 0 !important; }
   img { max-width: 100% !important; page-break-inside: avoid; break-inside: avoid; }
+  /* Figuri side-by-side (Cap. 6) — păstrează layout flex și limitează lățimea */
+  #modalContent div[style*="flex"] {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 12px !important;
+    justify-content: center !important;
+  }
+  #modalContent div[style*="flex"] > div { flex: 0 0 auto !important; }
+  #modalContent div[style*="flex"] img { max-width: 260px !important; }
   .calc-formula { font-size: 10.5pt !important; }
   table { page-break-inside: avoid; break-inside: avoid; }
 }
