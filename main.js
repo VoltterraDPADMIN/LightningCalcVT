@@ -27,6 +27,12 @@ const CHANGELOG = {
     'Raport PDF tipărit corect — pagina nu mai iese goală',
     'Indicator de progres la generarea raportului PDF',
   ],
+  '1.0.4': [
+    'Figuri Cap. 6 afișate corect una lângă alta la tipărire',
+    'Sistem de actualizare silențioasă complet funcțional',
+    'Pop-up changelog afișat automat după actualizare',
+    'Stabilitate îmbunătățită la descărcarea actualizărilor',
+  ],
 };
 
 // ──────────────────────────────────────────────
